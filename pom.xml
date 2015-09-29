@@ -223,4 +223,10 @@
         <finalName>javamail4ews</finalName>
     </build>
 
+    <scm>
+        <connection>scm:git:git@github.com:gartcimore/javamail4ews.git</connection>
+        <url>https://github.com/gartcimore/javamail4ews</url>
+        <developerConnection>scm:git:git@github.com:gartcimore/javamail4ews.git</developerConnection>
+    </scm>
+
 </project>
