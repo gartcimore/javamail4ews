@@ -18,13 +18,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 package org.sourceforge.net.javamail4ews.util;
 
-import org.apache.commons.configuration.CompositeConfiguration;
-import org.apache.commons.configuration.Configuration;
-import org.apache.commons.configuration.ConfigurationException;
-import org.apache.commons.configuration.PropertiesConfiguration;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
+import java.net.ConnectException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -33,84 +27,143 @@ import javax.mail.AuthenticationFailedException;
 import javax.mail.MessagingException;
 import javax.mail.Session;
 
+import org.apache.commons.configuration.CompositeConfiguration;
+import org.apache.commons.configuration.Configuration;
+import org.apache.commons.configuration.ConfigurationException;
+import org.apache.commons.configuration.PropertiesConfiguration;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import microsoft.exchange.webservices.data.ExchangeCredentials;
 import microsoft.exchange.webservices.data.ExchangeService;
+import microsoft.exchange.webservices.data.ExchangeVersion;
 import microsoft.exchange.webservices.data.Folder;
 import microsoft.exchange.webservices.data.WebCredentials;
 import microsoft.exchange.webservices.data.WellKnownFolderName;
 
 public final class Util {
+	private static final Logger logger = LoggerFactory.getLogger("org.sourceforge.net.javamail4ews"); 
+	
+	static {
+		logger.info("JavaMail 4 EWS loaded in version {}\nUses Microsoft(R) software", getVersion());
+	}
+	
+	private Util() {
+	}
 
-  private static final Logger logger = LoggerFactory.getLogger("org.sourceforge.net.javamail4ews");
+	@Override
+	protected Object clone() throws CloneNotSupportedException {
+		throw new CloneNotSupportedException();
+	}
+	
+	public static String getVersion() {
+		Package lPackage = Util.class.getPackage();
+		return lPackage.getImplementationVersion();
+	}
+	
+	
+	public static Configuration getConfiguration(Session pSession) {
+		try {
+			PropertiesConfiguration prop = new PropertiesConfiguration();
+			for(Object aKey : pSession.getProperties().keySet()) {
+				Object aValue = pSession.getProperties().get(aKey);
+				
+				prop.addProperty(aKey.toString(), aValue);
+			}
+			
+			CompositeConfiguration config = new CompositeConfiguration();
+			config.addConfiguration(prop);
+			URL lURL = Thread.currentThread().getContextClassLoader().getResource("javamail-ews-bridge.default.properties");
+			config.addConfiguration(new PropertiesConfiguration(lURL));
+			return config;
+		} catch (ConfigurationException e) {
+			throw new RuntimeException(e.getMessage(), e);
+		}
+	}
+	
+	public static ExchangeService getExchangeService(String host, int port, String user,
+			String password, Session pSession) throws MessagingException {
+		if (user == null) {
+			return null;
+		}
+		if (password == null) {
+			return null;
+		}
 
-  static {
-    logger.info("JavaMail 4 EWS loaded in version {}\nUses Microsoft(R) software", getVersion());
-  }
+		String version = getConfiguration(pSession).getString(
+				"org.sourceforge.net.javamail4ews.ExchangeVersion", "");
+		ExchangeVersion serverVersion = null;
+		if (!version.isEmpty()) {
+			try {
+				serverVersion = Enum.valueOf(ExchangeVersion.class, version);
+			} catch (IllegalArgumentException e) {
+				logger.info("Unknown version for exchange server: '" + version
+						+ "' using default : no version specified");
+			}
+		}
+		boolean enableTrace = getConfiguration(pSession).getBoolean("org.sourceforge.net.javamail4ews.util.Util.EnableServiceTrace");
+		ExchangeService service = null;
+		if (serverVersion != null) {
+			service = new ExchangeService(serverVersion);
+		} else {
+		      service = new ExchangeService();
+		}
+		Integer connectionTimeout = getConnectionTimeout(pSession);
+        Integer protocolTimeout = getProtocolTimeout(pSession);
+        if(connectionTimeout != null) {
+            service.setConnectionTimeout(connectionTimeout.intValue());
+        }
+        if(protocolTimeout != null) {
+            service.setProtocolTimeout(protocolTimeout.intValue());
+        }
+		service.setTraceEnabled(enableTrace);
 
-  private Util() {
-  }
+		ExchangeCredentials credentials = new WebCredentials(user, password);
+		service.setCredentials(credentials);
 
-  public static String getVersion() {
-    Package lPackage = Util.class.getPackage();
-    return lPackage.getImplementationVersion();
-  }
+		try {
+			service.setUrl(new URI(host));
+		} catch (URISyntaxException e) {
+			throw new MessagingException(e.getMessage(), e);
+		}
 
-  public static Configuration getConfiguration(Session pSession) {
-    try {
-      PropertiesConfiguration prop = new PropertiesConfiguration();
-      for (Object aKey : pSession.getProperties().keySet()) {
-        Object aValue = pSession.getProperties().get(aKey);
+		try {
+			//Bind to check if connection parameters are valid
+			if (getConfiguration(pSession).getBoolean("org.sourceforge.net.javamail4ews.util.Util.VerifyConnectionOnConnect")) {
+				logger.debug("Connection settings : trying to verify them");
+				Folder.bind(service, WellKnownFolderName.Inbox);
+				logger.info("Connection settings verified.");
+			} else {
+				logger.info("Connection settings not verified yet.");
+			}
+			return service;
+		} catch (Exception e) {
+		    Throwable cause = e.getCause();
+		    if(cause != null) {
+		        if (cause instanceof ConnectException) {
+		            Exception nested = (ConnectException) cause;
+		            throw new MessagingException(nested.getMessage(), nested);
+                }
+		    }
+		    throw new AuthenticationFailedException(e.getMessage());
+		}
+	}
 
-        prop.addProperty(aKey.toString(), aValue);
-      }
-
-      CompositeConfiguration config = new CompositeConfiguration();
-      config.addConfiguration(prop);
-      URL lURL = Thread.currentThread().getContextClassLoader().getResource("javamail-ews-bridge.default.properties");
-      config.addConfiguration(new PropertiesConfiguration(lURL));
-      return config;
-    } catch (ConfigurationException e) {
-      throw new RuntimeException(e.getMessage(), e);
+    private static Integer getConnectionTimeout(Session pSession) {
+        Integer connectionTimeout = null;
+        String cnxTimeoutStr = pSession.getProperty("mail.pop3.connectiontimeout");
+        if(cnxTimeoutStr != null) {
+            connectionTimeout = Integer.valueOf(cnxTimeoutStr);
+        }
+        return connectionTimeout;
     }
-  }
-
-  public static ExchangeService getExchangeService(String host, int port, String user,
-                                                   String password, Session pSession) throws MessagingException {
-    if (user == null) {
-      return null;
+    
+    private static Integer getProtocolTimeout(Session pSession) {
+        Integer protocolTimeout = null;
+        String protTimeoutStr = pSession.getProperty("mail.pop3.timeout");
+        if( protTimeoutStr != null) {
+            protocolTimeout = Integer.valueOf(protTimeoutStr);
+        }
+        return protocolTimeout;
     }
-    if (password == null) {
-      return null;
-    }
-
-    ExchangeService service = new ExchangeService();
-
-    ExchangeCredentials credentials = new WebCredentials(user, password);
-    service.setCredentials(credentials);
-
-    try {
-      service.setUrl(new URI(host));
-    } catch (URISyntaxException e) {
-      throw new MessagingException(e.getMessage(), e);
-    }
-
-    try {
-      //Bind to check if connection parameters are valid
-      if (getConfiguration(pSession).getBoolean("org.sourceforge.net.javamail4ews.util.Util.VerifyConnectionOnConnect")) {
-        logger.debug("Connection settings are tried to verified.");
-        Folder.bind(service, WellKnownFolderName.Inbox);
-        logger.info("Connection settings verfied.");
-      } else {
-        logger.info("Connection settings not verified yet.");
-      }
-      return service;
-    } catch (Exception e) {
-      throw new AuthenticationFailedException(e.getMessage());
-    }
-  }
-
-  @Override
-  protected Object clone() throws CloneNotSupportedException {
-    throw new CloneNotSupportedException();
-  }
 }

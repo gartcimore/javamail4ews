@@ -36,45 +36,66 @@ import microsoft.exchange.webservices.data.ServiceLocalException;
 
 public class EwsMessage extends MimeMessage {
 
-  private final EmailMessage emailMessage;
-  private Date receivedDate;
+	private final EmailMessage emailMessage;
+	private Date receivedDate;
 
-  public EwsMessage(Folder folder,
-                    int msgnum, EmailMessage pEmailMessage) throws MessagingException, ServiceLocalException {
-    super(folder, new InternetHeaders(), new byte[0], msgnum);
-    emailMessage = pEmailMessage;
-  }
+	public EwsMessage(Folder folder, 
+			int msgnum, EmailMessage pEmailMessage) throws MessagingException, ServiceLocalException {
+		super(folder, new InternetHeaders(), null, msgnum);
+		emailMessage = pEmailMessage;
+	}
 
-  public EwsMessage(Session session) {
-    super(session);
-    emailMessage = null;
-  }
+	public EwsMessage(Session session) {
+		super(session);
+		emailMessage = null;
+	}
 
-  protected EmailMessage getEmailMessage() {
-    return emailMessage;
-  }
-
-  @Override
-  public Date getReceivedDate() throws MessagingException {
-    return receivedDate;
-  }
-
-  public void setReceivedDate(Date pDate) {
-    this.receivedDate = pDate;
-  }
-
-  @Override
-  protected InputStream getContentStream() throws MessagingException {
-    try {
-      PropertySet oPropSetForBodyText = new PropertySet(BasePropertySet.FirstClassProperties);
-      oPropSetForBodyText.add(ItemSchema.MimeContent);
-      emailMessage.load(oPropSetForBodyText);
-      byte[] lContent = emailMessage.getMimeContent().getContent();
-
-      return new ByteArrayInputStream(lContent);
-    } catch (Exception e) {
-      throw new MessagingException(e.getMessage());
+	public void createFromStream(InputStream paramInputStream) throws MessagingException {
+		parse(paramInputStream);
+	}
+	
+	protected EmailMessage getEmailMessage() {
+		return emailMessage;
+	}
+	
+    @Override
+	public Date getReceivedDate() throws MessagingException {
+    	return receivedDate;
     }
-  }
+    
+    public void setReceivedDate(Date pDate) {
+    	this.receivedDate = pDate;
+    }
+    
+    @Override
+    protected InputStream getContentStream() throws MessagingException {
+        try {
+        	PropertySet oPropSetForBodyText = new PropertySet(BasePropertySet.FirstClassProperties);
+			oPropSetForBodyText.add(ItemSchema.MimeContent);
+			emailMessage.load(oPropSetForBodyText);
+			byte[] lContent = emailMessage.getMimeContent().getContent();
+			
+			return new ByteArrayInputStream(lContent);
+		} catch (Exception e) {
+			throw new MessagingException(e.getMessage());
+		}
+    }
 
+//    @Override
+//    public String getContentType() throws MessagingException {
+//    	try {
+//			return emailMessage.getMimeContent().toString();
+//		} catch (ServiceLocalException e) {
+//			throw new MessagingException(e.getMessage(), e);
+//		}
+//    }
+    
+    @Override
+    public int getSize() throws MessagingException {
+    	try {
+			return emailMessage.getSize();
+		} catch (ServiceLocalException e) {
+			throw new MessagingException(e.getMessage(), e);
+		}
+    }
 }
