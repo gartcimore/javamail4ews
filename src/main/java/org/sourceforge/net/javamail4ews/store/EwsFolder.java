@@ -33,36 +33,33 @@ import javax.mail.event.FolderListener;
 import javax.mail.search.FlagTerm;
 import javax.mail.search.SearchTerm;
 
-import microsoft.exchange.webservices.data.BasePropertySet;
-import microsoft.exchange.webservices.data.ConflictResolutionMode;
-import microsoft.exchange.webservices.data.DeleteMode;
-import microsoft.exchange.webservices.data.EmailMessage;
-import microsoft.exchange.webservices.data.EmailMessageSchema;
-import microsoft.exchange.webservices.data.ExchangeService;
-import microsoft.exchange.webservices.data.FindFoldersResults;
-import microsoft.exchange.webservices.data.FindItemsResults;
-import microsoft.exchange.webservices.data.Folder;
-import microsoft.exchange.webservices.data.FolderId;
-import microsoft.exchange.webservices.data.FolderSchema;
-import microsoft.exchange.webservices.data.FolderView;
-import microsoft.exchange.webservices.data.Item;
-import microsoft.exchange.webservices.data.ItemId;
-import microsoft.exchange.webservices.data.ItemSchema;
-import microsoft.exchange.webservices.data.ItemView;
-import microsoft.exchange.webservices.data.LogicalOperator;
-import microsoft.exchange.webservices.data.MoveCopyItemResponse;
-import microsoft.exchange.webservices.data.PropertySet;
-import microsoft.exchange.webservices.data.SearchFilter;
-import microsoft.exchange.webservices.data.SearchFilter.SearchFilterCollection;
-import microsoft.exchange.webservices.data.ServiceLocalException;
-import microsoft.exchange.webservices.data.ServiceResponseCollection;
-import microsoft.exchange.webservices.data.ServiceResponseException;
-import microsoft.exchange.webservices.data.WellKnownFolderName;
-
 import org.apache.commons.configuration.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.sourceforge.net.javamail4ews.util.EwsMailConverter;
+
+import microsoft.exchange.webservices.data.core.ExchangeService;
+import microsoft.exchange.webservices.data.core.PropertySet;
+import microsoft.exchange.webservices.data.core.enumeration.property.BasePropertySet;
+import microsoft.exchange.webservices.data.core.enumeration.property.WellKnownFolderName;
+import microsoft.exchange.webservices.data.core.enumeration.search.LogicalOperator;
+import microsoft.exchange.webservices.data.core.enumeration.service.ConflictResolutionMode;
+import microsoft.exchange.webservices.data.core.enumeration.service.DeleteMode;
+import microsoft.exchange.webservices.data.core.exception.service.local.ServiceLocalException;
+import microsoft.exchange.webservices.data.core.exception.service.remote.ServiceResponseException;
+import microsoft.exchange.webservices.data.core.service.folder.Folder;
+import microsoft.exchange.webservices.data.core.service.item.EmailMessage;
+import microsoft.exchange.webservices.data.core.service.item.Item;
+import microsoft.exchange.webservices.data.core.service.schema.EmailMessageSchema;
+import microsoft.exchange.webservices.data.core.service.schema.FolderSchema;
+import microsoft.exchange.webservices.data.core.service.schema.ItemSchema;
+import microsoft.exchange.webservices.data.property.complex.FolderId;
+import microsoft.exchange.webservices.data.property.complex.ItemId;
+import microsoft.exchange.webservices.data.search.FindFoldersResults;
+import microsoft.exchange.webservices.data.search.FindItemsResults;
+import microsoft.exchange.webservices.data.search.FolderView;
+import microsoft.exchange.webservices.data.search.ItemView;
+import microsoft.exchange.webservices.data.search.filter.SearchFilter;
 
 //TODO Disconnected event for ConnectionListeners
 public class EwsFolder extends javax.mail.Folder {
@@ -173,7 +170,7 @@ public class EwsFolder extends javax.mail.Folder {
     }
 
     private void markMessageRead(List<EwsMessage> messagesRead) throws MessagingException, Exception,
-            ServiceResponseException {
+      ServiceResponseException {
         if (messagesRead == null || messagesRead.isEmpty())
             return;
         for (EwsMessage aMessage : messagesRead) {
@@ -385,7 +382,7 @@ public class EwsFolder extends javax.mail.Folder {
     @Override
     public boolean hasNewMessages() throws MessagingException {
         ItemView view = new ItemView(ITEM_VIEW_MAX_ITEMS);
-        SearchFilterCollection search = new SearchFilter.SearchFilterCollection();
+        SearchFilter.SearchFilterCollection search = new SearchFilter.SearchFilterCollection();
         search.add(new SearchFilter.IsGreaterThanOrEqualTo(ItemSchema.DateTimeReceived, timestamp));
         FindItemsResults<Item> lFindResults;
         try {
@@ -411,7 +408,7 @@ public class EwsFolder extends javax.mail.Folder {
         FolderView lFolderView = new FolderView(ITEM_VIEW_MAX_ITEMS);
         FindFoldersResults lFindFoldersResults;
         try {
-            SearchFilterCollection lSearchFilter = new SearchFilter.SearchFilterCollection();
+            SearchFilter.SearchFilterCollection lSearchFilter = new SearchFilter.SearchFilterCollection();
             if (!pattern.equals("%")) {
                 // TODO incomplete implementation - wildcards are not implemented yet
                 lSearchFilter.add(new SearchFilter.IsEqualTo(FolderSchema.DisplayName, pattern));

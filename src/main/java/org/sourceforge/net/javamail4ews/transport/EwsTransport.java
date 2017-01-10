@@ -18,40 +18,29 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 package org.sourceforge.net.javamail4ews.transport;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.util.Enumeration;
-
-import javax.mail.Address;
-import javax.mail.BodyPart;
-import javax.mail.Header;
-import javax.mail.Message;
-import javax.mail.MessagingException;
-import javax.mail.Multipart;
-import javax.mail.Part;
-import javax.mail.SendFailedException;
-import javax.mail.Session;
-import javax.mail.Transport;
-import javax.mail.URLName;
-import javax.mail.internet.InternetAddress;
-import javax.mail.internet.MimeMessage;
-
-import microsoft.exchange.webservices.data.BodyType;
-import microsoft.exchange.webservices.data.EmailAddress;
-import microsoft.exchange.webservices.data.EmailMessage;
-import microsoft.exchange.webservices.data.ExchangeService;
-import microsoft.exchange.webservices.data.FileAttachment;
-import microsoft.exchange.webservices.data.Item;
-import microsoft.exchange.webservices.data.MessageBody;
-import microsoft.exchange.webservices.data.ServiceLocalException;
-import microsoft.exchange.webservices.data.WellKnownFolderName;
+import com.sun.mail.smtp.SMTPSendFailedException;
 
 import org.apache.commons.configuration.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.sourceforge.net.javamail4ews.util.Util;
 
-import com.sun.mail.smtp.SMTPSendFailedException;
+import microsoft.exchange.webservices.data.core.ExchangeService;
+import microsoft.exchange.webservices.data.core.enumeration.property.BodyType;
+import microsoft.exchange.webservices.data.core.enumeration.property.WellKnownFolderName;
+import microsoft.exchange.webservices.data.core.exception.service.local.ServiceLocalException;
+import microsoft.exchange.webservices.data.core.service.item.EmailMessage;
+import microsoft.exchange.webservices.data.property.complex.EmailAddress;
+import microsoft.exchange.webservices.data.property.complex.FileAttachment;
+import microsoft.exchange.webservices.data.property.complex.MessageBody;
+
+import javax.mail.*;
+import javax.mail.internet.InternetAddress;
+import javax.mail.internet.MimeMessage;
+
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.util.Enumeration;
 
 public class EwsTransport extends Transport {
 	private static final String TEXT_STAR = "text/*";

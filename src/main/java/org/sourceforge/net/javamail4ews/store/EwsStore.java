@@ -27,9 +27,9 @@ import javax.mail.URLName;
 import org.apache.commons.configuration.Configuration;
 import org.sourceforge.net.javamail4ews.util.Util;
 
-import microsoft.exchange.webservices.data.ExchangeService;
-import microsoft.exchange.webservices.data.FolderId;
-import microsoft.exchange.webservices.data.WellKnownFolderName;
+import microsoft.exchange.webservices.data.core.ExchangeService;
+import microsoft.exchange.webservices.data.core.enumeration.property.WellKnownFolderName;
+import microsoft.exchange.webservices.data.property.complex.FolderId;
 
 public class EwsStore extends Store {
 

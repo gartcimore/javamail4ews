@@ -18,6 +18,12 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 package org.sourceforge.net.javamail4ews.store;
 
+import microsoft.exchange.webservices.data.core.PropertySet;
+import microsoft.exchange.webservices.data.core.enumeration.property.BasePropertySet;
+import microsoft.exchange.webservices.data.core.exception.service.local.ServiceLocalException;
+import microsoft.exchange.webservices.data.core.service.item.EmailMessage;
+import microsoft.exchange.webservices.data.core.service.schema.ItemSchema;
+
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.util.Date;
@@ -28,11 +34,6 @@ import javax.mail.Session;
 import javax.mail.internet.InternetHeaders;
 import javax.mail.internet.MimeMessage;
 
-import microsoft.exchange.webservices.data.BasePropertySet;
-import microsoft.exchange.webservices.data.EmailMessage;
-import microsoft.exchange.webservices.data.ItemSchema;
-import microsoft.exchange.webservices.data.PropertySet;
-import microsoft.exchange.webservices.data.ServiceLocalException;
 
 public class EwsMessage extends MimeMessage {
 

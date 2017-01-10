@@ -1,24 +1,25 @@
 package org.sourceforge.net.javamail4ews.util;
 
-import java.io.ByteArrayInputStream;
-import java.io.UnsupportedEncodingException;
-import java.util.Iterator;
-
-import javax.mail.MessagingException;
-import javax.mail.Flags.Flag;
-import javax.mail.Message.RecipientType;
-import javax.mail.internet.InternetAddress;
-
 import org.sourceforge.net.javamail4ews.store.EwsFolder;
 import org.sourceforge.net.javamail4ews.store.EwsMessage;
 
-import microsoft.exchange.webservices.data.BasePropertySet;
-import microsoft.exchange.webservices.data.EmailAddress;
-import microsoft.exchange.webservices.data.EmailAddressCollection;
-import microsoft.exchange.webservices.data.EmailMessage;
-import microsoft.exchange.webservices.data.ItemSchema;
-import microsoft.exchange.webservices.data.PropertySet;
-import microsoft.exchange.webservices.data.ServiceLocalException;
+
+import microsoft.exchange.webservices.data.core.PropertySet;
+import microsoft.exchange.webservices.data.core.enumeration.property.BasePropertySet;
+import microsoft.exchange.webservices.data.core.exception.service.local.ServiceLocalException;
+import microsoft.exchange.webservices.data.core.service.item.EmailMessage;
+import microsoft.exchange.webservices.data.core.service.schema.ItemSchema;
+import microsoft.exchange.webservices.data.property.complex.EmailAddress;
+import microsoft.exchange.webservices.data.property.complex.EmailAddressCollection;
+
+import javax.mail.Flags.Flag;
+import javax.mail.Message.RecipientType;
+import javax.mail.MessagingException;
+import javax.mail.internet.InternetAddress;
+
+import java.io.ByteArrayInputStream;
+import java.io.UnsupportedEncodingException;
+import java.util.Iterator;
 
 public class EwsMailConverter {
 	private final EmailMessage emailMessage;

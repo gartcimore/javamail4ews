@@ -34,12 +34,12 @@ import org.apache.commons.configuration.PropertiesConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import microsoft.exchange.webservices.data.ExchangeCredentials;
-import microsoft.exchange.webservices.data.ExchangeService;
-import microsoft.exchange.webservices.data.ExchangeVersion;
-import microsoft.exchange.webservices.data.Folder;
-import microsoft.exchange.webservices.data.WebCredentials;
-import microsoft.exchange.webservices.data.WellKnownFolderName;
+import microsoft.exchange.webservices.data.core.ExchangeService;
+import microsoft.exchange.webservices.data.core.enumeration.misc.ExchangeVersion;
+import microsoft.exchange.webservices.data.core.enumeration.property.WellKnownFolderName;
+import microsoft.exchange.webservices.data.core.service.folder.Folder;
+import microsoft.exchange.webservices.data.credential.ExchangeCredentials;
+import microsoft.exchange.webservices.data.credential.WebCredentials;
 
 public final class Util {
 	private static final Logger logger = LoggerFactory.getLogger("org.sourceforge.net.javamail4ews"); 
@@ -111,10 +111,14 @@ public final class Util {
 		Integer connectionTimeout = getConnectionTimeout(pSession);
         Integer protocolTimeout = getProtocolTimeout(pSession);
         if(connectionTimeout != null) {
-            service.setConnectionTimeout(connectionTimeout.intValue());
+//            service.setConnectionTimeout(connectionTimeout.intValue());
+					// TODO should be still possible to set connection timeout
+          logger.debug("setting connection timeout to {} is ignored", connectionTimeout);
         }
         if(protocolTimeout != null) {
-            service.setProtocolTimeout(protocolTimeout.intValue());
+//            service.setProtocolTimeout(protocolTimeout.intValue());
+          // TODO should be still possible to set protocol timeout
+          logger.debug("setting protocol timeout to {} is ignored", protocolTimeout);
         }
 		service.setTraceEnabled(enableTrace);
 
