@@ -26,15 +26,15 @@
         <skipUnitTests>false</skipUnitTests>
         <maven-site-plugin.skip>false</maven-site-plugin.skip>
 
-        <java.version>1.7</java.version>
-        <maven.compiler.source>1.7</maven.compiler.source>
-        <maven.compiler.target>1.7</maven.compiler.target>
-        <maven.surefire.plugin.version>2.15</maven.surefire.plugin.version>
-        <build.helper.maven.plugin.version>1.9.1</build.helper.maven.plugin.version>
+        <java.version>1.8</java.version>
+        <maven.compiler.source>1.8</maven.compiler.source>
+        <maven.compiler.target>1.8</maven.compiler.target>
+        <maven.surefire.plugin.version>2.19.1</maven.surefire.plugin.version>
+        <build.helper.maven.plugin.version>1.12</build.helper.maven.plugin.version>
 
         <version.commons.configuration>1.10</version.commons.configuration>
         <version.slf4j.api>1.7.9</version.slf4j.api>
-        <version.microsoft.ewsjava.api>1.2.6</version.microsoft.ewsjava.api>
+        <version.microsoft.ewsjava.api>2.0</version.microsoft.ewsjava.api>
         <version.javax.mail>1.4.2</version.javax.mail>
         <version.findbugs.annotations>2.0.3</version.findbugs.annotations>
         <version.maven.site.plugin>3.4</version.maven.site.plugin>
@@ -56,13 +56,11 @@
             <artifactId>slf4j-api</artifactId>
             <version>${version.slf4j.api}</version>
         </dependency>
-        <dependency>
-            <groupId>microsoft</groupId>
-            <artifactId>ewsjava-api</artifactId>
-            <version>${version.microsoft.ewsjava.api}</version>
-            <scope>system</scope>
-            <systemPath>${project.basedir}/lib/EWSJavaAPI.jar</systemPath>
-        </dependency>
+		<dependency>
+			<groupId>com.microsoft.ews-java-api</groupId>
+			<artifactId>ews-java-api</artifactId>
+			<version>${version.microsoft.ewsjava.api}</version>
+		</dependency>
     </dependencies>
 
     <build>
