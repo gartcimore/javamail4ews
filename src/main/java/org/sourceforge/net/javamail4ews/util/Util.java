@@ -42,12 +42,12 @@ import microsoft.exchange.webservices.data.credential.ExchangeCredentials;
 import microsoft.exchange.webservices.data.credential.WebCredentials;
 
 public final class Util {
-	private static final Logger logger = LoggerFactory.getLogger("org.sourceforge.net.javamail4ews"); 
-	
+	private static final Logger logger = LoggerFactory.getLogger("org.sourceforge.net.javamail4ews");
+
 	static {
 		logger.info("JavaMail 4 EWS loaded in version {}\nUses Microsoft(R) software", getVersion());
 	}
-	
+
 	private Util() {
 	}
 
@@ -55,22 +55,22 @@ public final class Util {
 	protected Object clone() throws CloneNotSupportedException {
 		throw new CloneNotSupportedException();
 	}
-	
+
 	public static String getVersion() {
 		Package lPackage = Util.class.getPackage();
 		return lPackage.getImplementationVersion();
 	}
-	
-	
+
+
 	public static Configuration getConfiguration(Session pSession) {
 		try {
 			PropertiesConfiguration prop = new PropertiesConfiguration();
 			for(Object aKey : pSession.getProperties().keySet()) {
 				Object aValue = pSession.getProperties().get(aKey);
-				
+
 				prop.addProperty(aKey.toString(), aValue);
 			}
-			
+
 			CompositeConfiguration config = new CompositeConfiguration();
 			config.addConfiguration(prop);
 			URL lURL = Thread.currentThread().getContextClassLoader().getResource("javamail-ews-bridge.default.properties");
@@ -80,7 +80,7 @@ public final class Util {
 			throw new RuntimeException(e.getMessage(), e);
 		}
 	}
-	
+
 	public static ExchangeService getExchangeService(String host, int port, String user,
 			String password, Session pSession) throws MessagingException {
 		if (user == null) {
@@ -111,13 +111,10 @@ public final class Util {
 		Integer connectionTimeout = getConnectionTimeout(pSession);
         Integer protocolTimeout = getProtocolTimeout(pSession);
         if(connectionTimeout != null) {
-//            service.setConnectionTimeout(connectionTimeout.intValue());
-					// TODO should be still possible to set connection timeout
-          logger.debug("setting connection timeout to {} is ignored", connectionTimeout);
+            logger.debug("setting timeout to {} using connection timeout value", connectionTimeout);
+            service.setTimeout(connectionTimeout.intValue());
         }
         if(protocolTimeout != null) {
-//            service.setProtocolTimeout(protocolTimeout.intValue());
-          // TODO should be still possible to set protocol timeout
           logger.debug("setting protocol timeout to {} is ignored", protocolTimeout);
         }
 		service.setTraceEnabled(enableTrace);
@@ -161,7 +158,7 @@ public final class Util {
         }
         return connectionTimeout;
     }
-    
+
     private static Integer getProtocolTimeout(Session pSession) {
         Integer protocolTimeout = null;
         String protTimeoutStr = pSession.getProperty("mail.pop3.timeout");

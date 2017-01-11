@@ -439,8 +439,8 @@ public class EwsFolder extends javax.mail.Folder {
 
             if (prefetchItems) {
                 FindItemsResults<Item> lFindResults = getService().findItems(folder.getId(), view);
-                messages = new ArrayList<EwsMessage>(lFindResults.getTotalCount());
-                unreadMessages = new ArrayList<EwsMessage>();
+                messages = new ArrayList<>(lFindResults.getTotalCount());
+                unreadMessages = new ArrayList<>();
                 for (Item aItem : lFindResults) {
                     if (aItem instanceof EmailMessage) {
                         logger.info("Fetching content of item {}", aItem.getId());
@@ -512,7 +512,7 @@ public class EwsFolder extends javax.mail.Folder {
                 new SearchFilter.IsEqualTo(EmailMessageSchema.IsRead, Boolean.FALSE));
 
         FindItemsResults<Item> findResults = getService().findItems(folder.getId(), unreadFilter, unreadView);
-        unreadMessages = new ArrayList<EwsMessage>(findResults.getTotalCount());
+        unreadMessages = new ArrayList<>(findResults.getTotalCount());
         Message[] a = new Message[findResults.getTotalCount()];
         for (Item aItem : findResults) {
             if (aItem instanceof EmailMessage) {
