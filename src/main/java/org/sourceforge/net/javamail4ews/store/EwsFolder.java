@@ -491,7 +491,7 @@ public class EwsFolder extends javax.mail.Folder {
     }
 
     protected ExchangeService getService() {
-        EwsStore lStore = (EwsStore) getStore();
+        EwsStore lStore = getStore();
         return lStore.getService();
     }
 
@@ -559,9 +559,9 @@ public class EwsFolder extends javax.mail.Folder {
         ArrayList<ItemId> ids = new ArrayList<ItemId>(1);
         ids.add(new ItemId(id));
         getService().moveItems(ids, failedFolderId);
-        
+
     }
-    
+
     public FolderId findFolder(String folderName) throws ServiceLocalException, Exception {
         FolderView folderView = new FolderView(ITEM_VIEW_MAX_ITEMS);
 
@@ -584,7 +584,7 @@ public class EwsFolder extends javax.mail.Folder {
         failedFolder.save(parentFolderId);
         return failedFolder.getId();
     }
-    
+
 
     public boolean testCreateFolderOperation(String folderName) throws Exception {
         FolderId folderId = findFolder(folderName);
