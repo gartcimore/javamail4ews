@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>org.gartcimore.java</groupId>
+    <artifactId>mailsample</artifactId>
+    <version>1.0-SNAPSHOT</version>
+
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <skipUnitTests>false</skipUnitTests>
+        <maven-site-plugin.skip>false</maven-site-plugin.skip>
+
+        <java.version>1.8</java.version>
+        <maven.compiler.source>1.8</maven.compiler.source>
+        <maven.compiler.target>1.8</maven.compiler.target>
+        <maven.surefire.plugin.version>2.19.1</maven.surefire.plugin.version>
+        <build.helper.maven.plugin.version>1.12</build.helper.maven.plugin.version>
+
+        <version.commons.configuration>1.10</version.commons.configuration>
+        <version.slf4j.api>1.7.9</version.slf4j.api>
+        <version.microsoft.ewsjava.api>2.0</version.microsoft.ewsjava.api>
+        <version.javax.mail>1.4.2</version.javax.mail>
+        <version.findbugs.annotations>2.0.3</version.findbugs.annotations>
+        <version.maven.site.plugin>3.4</version.maven.site.plugin>
+    </properties>
+    
+
+    <dependencies>
+        <dependency>
+            <groupId>javax.mail</groupId>
+            <artifactId>mail</artifactId>
+            <version>${version.javax.mail}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.gartcimore.java</groupId>
+            <artifactId>javamail4ews</artifactId>
+            <version>1.0-SNAPSHOT</version>
+        </dependency>
+    </dependencies>
+
+</project>
