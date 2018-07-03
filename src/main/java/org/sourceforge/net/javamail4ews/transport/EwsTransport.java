@@ -19,12 +19,14 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 package org.sourceforge.net.javamail4ews.transport;
 
 import com.sun.mail.smtp.SMTPSendFailedException;
-
-import org.apache.commons.configuration.Configuration;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.sourceforge.net.javamail4ews.util.Util;
-
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.util.Enumeration;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import javax.mail.*;
+import javax.mail.internet.InternetAddress;
+import javax.mail.internet.MimeMessage;
 import microsoft.exchange.webservices.data.core.ExchangeService;
 import microsoft.exchange.webservices.data.core.enumeration.property.BodyType;
 import microsoft.exchange.webservices.data.core.enumeration.property.WellKnownFolderName;
@@ -33,14 +35,8 @@ import microsoft.exchange.webservices.data.core.service.item.EmailMessage;
 import microsoft.exchange.webservices.data.property.complex.EmailAddress;
 import microsoft.exchange.webservices.data.property.complex.FileAttachment;
 import microsoft.exchange.webservices.data.property.complex.MessageBody;
-
-import javax.mail.*;
-import javax.mail.internet.InternetAddress;
-import javax.mail.internet.MimeMessage;
-
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.util.Enumeration;
+import org.apache.commons.configuration.Configuration;
+import org.sourceforge.net.javamail4ews.util.Util;
 
 public class EwsTransport extends Transport {
 	private static final String TEXT_STAR = "text/*";
@@ -50,18 +46,30 @@ public class EwsTransport extends Transport {
     private static final String TEXT_PLAIN = "text/plain";
 	private static final String TEXT_HTML = "text/html";
 	
-	private static final Logger logger = LoggerFactory.getLogger(EwsTransport.class);
+	private static final Logger logger = Logger.getLogger(EwsTransport.class.getName());
 	
 	private ExchangeService service;
+	private String protocol;
 	
 	public EwsTransport(Session session, URLName urlname) {
 		super(session, urlname);
 	}
 
+    private String getProtocol() {
+        if (protocol == null) 
+            protocol = session.getProperty("mail.store.protocol");
+        if (protocol == null || protocol.trim().isEmpty())
+            protocol = "ewsstore";
+        return protocol;
+    }
+	
 	@Override
-	protected boolean protocolConnect(String host, int port, String user,
-			String password) throws MessagingException {
-		service = Util.getExchangeService(host, port, user, password, session);
+	protected boolean protocolConnect(String host, int port, String user, String password) throws MessagingException {
+        if (user == null)
+            user = session.getProperty("mail." + getProtocol() + ".user");
+        if (password == null)
+            password = session.getProperty("mail." + getProtocol() + ".password");
+		service = Util.getExchangeService(getProtocol(), host, port, user, password, session);
 		if (service == null) {
 			return false;
 		} else {
@@ -135,7 +143,6 @@ public class EwsTransport extends Transport {
 		msg.setBody(mb);
 	}
 	
-    @SuppressWarnings("unchecked")
 	private String getFirstHeaderValue(BodyPart part, String pKey) throws MessagingException {
 		Enumeration<Header> lMatchingHeaders = part.getMatchingHeaders(new String[]{pKey});
 		
@@ -157,12 +164,12 @@ public class EwsTransport extends Transport {
             mb.setBodyType(BodyType.Text);
             mb.setText(s);
         } else if (part.isMimeType(TEXT_STAR)) {
-            logger.debug("mime-type is '" + part.getContentType() + "' handling as " + TEXT_HTML);
+            logger.log(Level.FINE, "mime-type is '" + part.getContentType() + "' handling as " + TEXT_HTML);
             String s = (String) part.getContent();
             mb.setBodyType(BodyType.HTML);
             mb.setText(s);
         } else if (part.isMimeType(MULTIPART_ALTERNATIVE) && !treatAsAttachement) {
-            logger.debug("mime-type is '" + part.getContentType() + "'");
+            logger.log(Level.FINE, "mime-type is '" + part.getContentType() + "'");
             Multipart mp = (Multipart) part.getContent();
             String text = "";
             for (int i = 0; i < mp.getCount(); i++) {
@@ -177,7 +184,7 @@ public class EwsTransport extends Transport {
                 createBodyFromPart(msg, part, true);
         } 
         else if (part.isMimeType(MULTIPART_STAR) && !part.isMimeType(MULTIPART_ALTERNATIVE)) {
-            logger.debug("mime-type is '" + part.getContentType() + "'");
+            logger.log(Level.FINE, "mime-type is '" + part.getContentType() + "'");
             Multipart mp = (Multipart) part.getContent();
             int start = 0;
             if (!treatAsAttachement) {
@@ -196,7 +203,7 @@ public class EwsTransport extends Transport {
                     lNewAttachment.setContentId(lContentId);
                     lNewAttachment.setIsInline(true);
 
-                    logger.debug("Attached {} bytes as content {}", lContentBytes.length, lContentId);
+                    logger.log(Level.FINE, "Attached {0} bytes as content {1}", new Object[] { lContentBytes.length, lContentId });
                 } else {
                     String fileName = lBodyPart.getFileName();
                     fileName = (fileName == null ? "" + i : fileName);
@@ -204,8 +211,8 @@ public class EwsTransport extends Transport {
                     lNewAttachment.setIsInline(false);
                     lNewAttachment.setContentType(lBodyPart.getContentType());
 
-                    logger.debug("Attached {} bytes as file {}", lContentBytes.length, fileName);
-                    logger.debug("content type is {} ", lBodyPart.getContentType());
+                    logger.log(Level.FINE, "Attached {0} bytes as file {1}", new Object[] { lContentBytes.length, fileName });
+                    logger.log(Level.FINE, "content type is {0} ", lBodyPart.getContentType());
                 }
                 lNewAttachment.setIsContactPhoto(false);
             }
@@ -237,18 +244,18 @@ public class EwsTransport extends Transport {
         }
         
         for (Address aAddress : pToAddresses) {
-            logger.info("Adding adress {} as TO recepient", aAddress.toString());
+            logger.log(Level.INFO, "Adding adress {0} as TO recepient", aAddress.toString());
             pEmailMessage.getToRecipients().add(emailAddressFromInternetAddress(aAddress));
         }
         if (pCcAddresses != null) {
             for (Address aAddress : pCcAddresses) {
-                logger.info("Adding adress {} as CC recepient", aAddress.toString());
+                logger.log(Level.INFO, "Adding adress {0} as CC recepient", aAddress.toString());
                 pEmailMessage.getCcRecipients().add(emailAddressFromInternetAddress(aAddress));
             }
         }
         if (pBccAddresses != null) {
             for (Address aAddress : pBccAddresses) {
-                logger.info("Adding adress {} as BCC recepient", aAddress.toString());
+                logger.log(Level.INFO, "Adding adress {0} as BCC recepient", aAddress.toString());
                 pEmailMessage.getBccRecipients().add(emailAddressFromInternetAddress(aAddress));
             }
         }

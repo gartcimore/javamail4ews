@@ -27,29 +27,35 @@
         <maven-site-plugin.skip>false</maven-site-plugin.skip>
 
         <java.version>1.8</java.version>
-        <maven.compiler.source>1.8</maven.compiler.source>
-        <maven.compiler.target>1.8</maven.compiler.target>
+        <maven.compiler.source>1.7</maven.compiler.source>
+        <maven.compiler.target>1.7</maven.compiler.target>
         <maven.surefire.plugin.version>2.19.1</maven.surefire.plugin.version>
         <build.helper.maven.plugin.version>1.12</build.helper.maven.plugin.version>
 
         <version.commons.configuration>1.10</version.commons.configuration>
-        <version.slf4j.api>1.7.9</version.slf4j.api>
+        <version.commons.codec>1.9</version.commons.codec>
+        <version.slf4j.api>1.7.25</version.slf4j.api>
         <version.microsoft.ewsjava.api>2.0</version.microsoft.ewsjava.api>
-        <version.javax.mail>1.4.2</version.javax.mail>
+        <version.javax.mail>1.6.1</version.javax.mail>
         <version.findbugs.annotations>2.0.3</version.findbugs.annotations>
         <version.maven.site.plugin>3.4</version.maven.site.plugin>
     </properties>
 
     <dependencies>
         <dependency>
-            <groupId>javax.mail</groupId>
-            <artifactId>mail</artifactId>
+            <groupId>com.sun.mail</groupId>
+            <artifactId>javax.mail</artifactId>
             <version>${version.javax.mail}</version>
         </dependency>
         <dependency>
             <groupId>commons-configuration</groupId>
             <artifactId>commons-configuration</artifactId>
             <version>${version.commons.configuration}</version>
+        </dependency>
+        <dependency>
+            <groupId>commons-codec</groupId>
+            <artifactId>commons-codec</artifactId>
+            <version>${version.commons.codec}</version>
         </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>
@@ -69,7 +75,7 @@
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-compiler-plugin</artifactId>
-                    <version>3.1</version>
+                    <version>3.5.1</version>
                     <configuration>
                         <source>${java.version}</source>
                         <target>${java.version}</target>
@@ -95,7 +101,7 @@
                                         <execute/>
                                     </action>
                                 </pluginExecution>
-                                <pluginExecution>
+                                <!--pluginExecution>
                                     <pluginExecutionFilter>
                                         <groupId>org.jacoco</groupId>
                                         <artifactId>jacoco-maven-plugin</artifactId>
@@ -109,7 +115,7 @@
                                     <action>
                                         <ignore/>
                                     </action>
-                                </pluginExecution>
+                                </pluginExecution-->
                                 <pluginExecution>
                                     <pluginExecutionFilter>
                                         <groupId>org.bsc.maven</groupId>
@@ -142,7 +148,7 @@
             </plugins>
         </pluginManagement>
         <plugins>
-            <plugin>
+            <!--plugin>
                 <groupId>org.jacoco</groupId>
                 <artifactId>jacoco-maven-plugin</artifactId>
                 <version>0.7.2.201409121644</version>
@@ -158,7 +164,7 @@
                         </goals>
                     </execution>
                 </executions>
-            </plugin>
+            </plugin-->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-jar-plugin</artifactId>
