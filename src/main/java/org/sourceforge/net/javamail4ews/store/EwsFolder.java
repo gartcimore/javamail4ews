@@ -21,7 +21,8 @@ package org.sourceforge.net.javamail4ews.store;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.mail.Flags;
 import javax.mail.Flags.Flag;
 import javax.mail.FolderNotFoundException;
@@ -32,12 +33,6 @@ import javax.mail.event.FolderEvent;
 import javax.mail.event.FolderListener;
 import javax.mail.search.FlagTerm;
 import javax.mail.search.SearchTerm;
-
-import org.apache.commons.configuration.Configuration;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.sourceforge.net.javamail4ews.util.EwsMailConverter;
-
 import microsoft.exchange.webservices.data.core.ExchangeService;
 import microsoft.exchange.webservices.data.core.PropertySet;
 import microsoft.exchange.webservices.data.core.enumeration.property.BasePropertySet;
@@ -60,6 +55,9 @@ import microsoft.exchange.webservices.data.search.FindItemsResults;
 import microsoft.exchange.webservices.data.search.FolderView;
 import microsoft.exchange.webservices.data.search.ItemView;
 import microsoft.exchange.webservices.data.search.filter.SearchFilter;
+import org.apache.commons.configuration.Configuration;
+import org.sourceforge.net.javamail4ews.util.EwsMailConverter;
+import org.sourceforge.net.javamail4ews.util.Util;
 
 //TODO Disconnected event for ConnectionListeners
 public class EwsFolder extends javax.mail.Folder {
@@ -86,7 +84,7 @@ public class EwsFolder extends javax.mail.Folder {
 
     private final DeleteMode DELETE_MODE;
 
-    private static final Logger logger = LoggerFactory.getLogger(EwsFolder.class);
+    private static final Logger logger = Logger.getLogger(EwsFolder.class.getName());
 
     private final Folder parentFolder;
 
@@ -108,13 +106,11 @@ public class EwsFolder extends javax.mail.Folder {
         super(store);
         addFolderListener(new FolderListenerPublisher());
 
-        ITEM_VIEW_MAX_ITEMS = getConfiguration().getInt(
-                "org.sourceforge.net.javamail4ews.store.EwsFolder.ItemViewMaxItems");
-        CONFLICT_RESOLUTION_MODE = ConflictResolutionMode.valueOf(getConfiguration().getString(
-                "org.sourceforge.net.javamail4ews.store.EwsFolder.ConflictResolutionMode"));
-        DELETE_MODE = DeleteMode.valueOf(getConfiguration().getString(
-                "org.sourceforge.net.javamail4ews.store.EwsFolder.DeleteMode"));
-        prefetchItems = getConfiguration().getBoolean("org.sourceforge.net.javamail4ews.store.EwsFolder.prefetchItems");
+        Configuration config = getConfiguration();
+        ITEM_VIEW_MAX_ITEMS = config.getInt("org.sourceforge.net.javamail4ews.store.EwsFolder.ItemViewMaxItems", 50);
+        CONFLICT_RESOLUTION_MODE = ConflictResolutionMode.valueOf(config.getString("org.sourceforge.net.javamail4ews.store.EwsFolder.ConflictResolutionMode", "AutoResolve"));
+        DELETE_MODE = DeleteMode.valueOf(config.getString("org.sourceforge.net.javamail4ews.store.EwsFolder.DeleteMode", "MoveToDeletedItems"));
+        prefetchItems = config.getBoolean("org.sourceforge.net.javamail4ews.store.EwsFolder.prefetchItems", true);
         try {
             INBOX = Folder.bind(getService(), new FolderId(WellKnownFolderName.Inbox));
 
@@ -127,7 +123,7 @@ public class EwsFolder extends javax.mail.Folder {
                 throw new IllegalArgumentException("pFolderId and pParentFolderId are null!");
             }
         } catch (Exception e) {
-            throw new RuntimeException(e.getMessage(), e);
+            throw Util.cast(e, RuntimeException.class);
         }
     }
 
@@ -161,7 +157,7 @@ public class EwsFolder extends javax.mail.Folder {
 
             } catch (Exception e) {
                 // Close anyway
-                throw new MessagingException(e.getMessage(), e);
+                throw Util.cast(e, MessagingException.class);
             } finally {
                 folder = null;
                 getStore().notifyConnectionListeners(ConnectionEvent.CLOSED);
@@ -193,7 +189,7 @@ public class EwsFolder extends javax.mail.Folder {
             notifyFolderListeners(FolderEvent.CREATED);
             return true;
         } catch (Exception e) {
-            throw new MessagingException(e.getMessage(), e);
+            throw Util.cast(e, MessagingException.class);
         }
     }
 
@@ -218,7 +214,7 @@ public class EwsFolder extends javax.mail.Folder {
             notifyFolderListeners(FolderEvent.DELETED);
             return true;
         } catch (Exception e) {
-            throw new MessagingException(e.getMessage(), e);
+            throw Util.cast(e, MessagingException.class);
         }
     }
 
@@ -239,7 +235,7 @@ public class EwsFolder extends javax.mail.Folder {
                 return false;
             }
         } catch (Exception e) {
-            throw new MessagingException(e.getMessage(), e);
+            throw Util.cast(e, MessagingException.class);
         }
     }
 
@@ -260,7 +256,7 @@ public class EwsFolder extends javax.mail.Folder {
                     EmailMessage aRawMessage = aMessage.getEmailMessage();
                     aRawMessage.delete(DELETE_MODE);
                 } catch (Exception e) {
-                    throw new MessagingException(e.getMessage(), e);
+                    throw Util.cast(e, MessagingException.class);
                 }
                 lDeletedMessages.add(aMessage);
                 messagesToDelete.remove(i);
@@ -275,7 +271,10 @@ public class EwsFolder extends javax.mail.Folder {
 
     @Override
     public EwsFolder getFolder(String name) throws MessagingException {
-        return list(name)[0];
+        EwsFolder[] result = list(name);
+        if (result == null || result.length == 0)
+            throw new MessagingException("Folder not found");
+        return result[0];
     }
 
     @Override
@@ -288,7 +287,7 @@ public class EwsFolder extends javax.mail.Folder {
             sb.append(folder.getDisplayName());
             return sb.toString();
         } catch (Exception e) {
-            throw new RuntimeException(e.getMessage(), e);
+            throw Util.cast(e, RuntimeException.class);
         }
     }
 
@@ -308,7 +307,7 @@ public class EwsFolder extends javax.mail.Folder {
             try {
                 return folder.getTotalCount();
             } catch (Exception e) {
-                throw new MessagingException(e.getMessage(), e);
+                throw Util.cast(e, MessagingException.class);
             }
         }
     }
@@ -332,7 +331,7 @@ public class EwsFolder extends javax.mail.Folder {
         try {
             findResults = getService().findItems(folder.getId(), unreadFilter, unreadView);
         } catch (Exception e) {
-            throw new MessagingException(e.getMessage());
+            throw Util.cast(e, MessagingException.class);
         }
         return findResults.getTotalCount();
     }
@@ -340,9 +339,9 @@ public class EwsFolder extends javax.mail.Folder {
     @Override
     public String getName() {
         try {
-            return folder.getDisplayName();
+            return (folder != null ? folder.getDisplayName() : null);
         } catch (ServiceLocalException e) {
-            throw new RuntimeException(e.getMessage(), e);
+            throw Util.cast(e, RuntimeException.class);
         }
     }
 
@@ -359,7 +358,7 @@ public class EwsFolder extends javax.mail.Folder {
                 return new EwsFolder(getStore(), folder.getParentFolderId());
             }
         } catch (ServiceLocalException e) {
-            throw new MessagingException(e.getMessage(), e);
+            throw Util.cast(e, MessagingException.class);
         }
     }
 
@@ -394,7 +393,7 @@ public class EwsFolder extends javax.mail.Folder {
                 return false;
             }
         } catch (Exception e) {
-            throw new MessagingException(e.getMessage(), e);
+            throw Util.cast(e, MessagingException.class);
         }
     }
 
@@ -406,14 +405,14 @@ public class EwsFolder extends javax.mail.Folder {
     @Override
     public EwsFolder[] list(String pattern) throws MessagingException {
         FolderView lFolderView = new FolderView(ITEM_VIEW_MAX_ITEMS);
-        FindFoldersResults lFindFoldersResults;
         try {
-            SearchFilter.SearchFilterCollection lSearchFilter = new SearchFilter.SearchFilterCollection();
-            if (!pattern.equals("%")) {
-                // TODO incomplete implementation - wildcards are not implemented yet
-                lSearchFilter.add(new SearchFilter.IsEqualTo(FolderSchema.DisplayName, pattern));
+            final FindFoldersResults lFindFoldersResults;
+            if (pattern != null && !pattern.equals("%")) {
+                SearchFilter lSearchFilter = new SearchFilter.IsEqualTo(FolderSchema.DisplayName, pattern);
+                lFindFoldersResults = folder.findFolders(lSearchFilter, lFolderView);
+            } else {
+                lFindFoldersResults = folder.findFolders(lFolderView);
             }
-            lFindFoldersResults = folder.findFolders(lSearchFilter, lFolderView);
             List<Folder> lFolders = lFindFoldersResults.getFolders();
 
             EwsFolder[] retValue = new EwsFolder[lFolders.size()];
@@ -423,7 +422,7 @@ public class EwsFolder extends javax.mail.Folder {
 
             return retValue;
         } catch (Exception e) {
-            throw new MessagingException(e.getMessage(), e);
+            throw Util.cast(e, MessagingException.class);
         }
     }
 
@@ -443,7 +442,7 @@ public class EwsFolder extends javax.mail.Folder {
                 unreadMessages = new ArrayList<>();
                 for (Item aItem : lFindResults) {
                     if (aItem instanceof EmailMessage) {
-                        logger.info("Fetching content of item {}", aItem.getId());
+                        logger.log(Level.INFO, "Fetching content of item {0}", aItem.getId());
 
                         EmailMessage aEmailMessage = (EmailMessage) aItem;
 
@@ -452,7 +451,7 @@ public class EwsFolder extends javax.mail.Folder {
                         messages.add(aConverter.convert());
 
                     } else {
-                        logger.warn("Skipping item {} as it is a {}", aItem.getId(), aItem.getClass());
+                        logger.log(Level.WARNING, "Skipping item {0} as it is a {1}", new Object[] { aItem.getId(), aItem.getClass() });
                     }
                 }
             } else {
@@ -461,7 +460,7 @@ public class EwsFolder extends javax.mail.Folder {
             timestamp = new Date();
             getStore().notifyConnectionListeners(ConnectionEvent.OPENED);
         } catch (Exception e) {
-            throw new MessagingException(e.getMessage(), e);
+            throw Util.cast(e, MessagingException.class);
         }
     }
 
@@ -481,7 +480,7 @@ public class EwsFolder extends javax.mail.Folder {
             getStore().notifyFolderListeners(FolderEvent.RENAMED, this);
             return true;
         } catch (Exception e) {
-            throw new MessagingException(e.getMessage(), e);
+            throw Util.cast(e, MessagingException.class);
         }
     }
 
@@ -490,6 +489,7 @@ public class EwsFolder extends javax.mail.Folder {
         return (EwsStore) super.getStore();
     }
 
+    @SuppressWarnings("resource")
     protected ExchangeService getService() {
         EwsStore lStore = getStore();
         return lStore.getService();
@@ -520,7 +520,7 @@ public class EwsFolder extends javax.mail.Folder {
                 EwsMailConverter aConverter = new EwsMailConverter(this, aEmailMessage, unreadMessages.size() + 1);
                 unreadMessages.add(aConverter.convert());
             } else {
-                logger.warn("Skipping item {} as it is a {}", aItem.getId(), aItem.getClass());
+                logger.log(Level.WARNING, "Skipping item {} as it is a {}", new Object[] { aItem.getId(), aItem.getClass() });
             }
         }
         return unreadMessages.toArray(a);
@@ -534,7 +534,7 @@ public class EwsFolder extends javax.mail.Folder {
                 try {
                     return getUnreadMessage(0);
                 } catch (Exception e) {
-                    throw new MessagingException(e.getMessage(),e);
+                    throw Util.cast(e, MessagingException.class);
                 }
             }
         }
@@ -571,14 +571,14 @@ public class EwsFolder extends javax.mail.Folder {
         FindFoldersResults folderResults = getService().findFolders(folder.getParentFolderId(),folderNameFilter,folderView);
         FolderId folderId = null;
         if(folderResults.getTotalCount() > 0) {
-            logger.debug("folder '"+folderName+"' found");
+            logger.log(Level.INFO, "folder '{0}' found", folderName);
             folderId = folderResults.getFolders().get(0).getId();
         }
         return folderId;
     }
 
     public FolderId createFolder(String folderName, FolderId parentFolderId) throws Exception {
-        logger.warn("creating folder '" + folderName + "', sub-directory of '" + parentFolderId + "'");
+        logger.log(Level.WARNING, "folder '{0}', sub-directory of '{1}'", new Object[] { folderName, parentFolderId });
         Folder failedFolder = new Folder(getService());
         failedFolder.setDisplayName(folderName);
         failedFolder.save(parentFolderId);
@@ -589,13 +589,13 @@ public class EwsFolder extends javax.mail.Folder {
     public boolean testCreateFolderOperation(String folderName) throws Exception {
         FolderId folderId = findFolder(folderName);
         if(folderId == null) {
-            logger.debug("folder '"+folderName+"' not found, creating it");
+            logger.log(Level.INFO, "folder '{0}' not found, creating it", folderName);
             try {
                 Folder failedFolder = new Folder(getService());
                 failedFolder.setDisplayName(folderName);
                 failedFolder.save(folder.getParentFolderId());
             } catch(Exception e) {
-                throw new Exception("could not create folder named '"+folderName+"'",e);
+                throw Util.cast(e, Exception.class, "could not create folder named '"+folderName+"'");
             }
         }
         return true;
