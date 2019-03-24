@@ -20,6 +20,7 @@ package org.sourceforge.net.javamail4ews.store;
 
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.Optional;
 import java.util.regex.Pattern;
 
 import javax.mail.Folder;
@@ -37,111 +38,113 @@ import microsoft.exchange.webservices.data.property.complex.FolderId;
 
 public class EwsStore extends Store {
 
-	private ExchangeService service;
-	private EwsFolder defaultFolder;
-	private String protocol;
+    private ExchangeService service;
+    private EwsFolder defaultFolder;
+    private String protocol;
 
-	public EwsStore(Session session, URLName urlname) {
-		super(session, urlname);
-	}
+    public EwsStore(Session session, URLName urlname) {
+        super(session, urlname);
+    }
 
-	private String getProtocol() {
-	    if (protocol == null) 
-	        protocol = session.getProperty("mail.store.protocol");
-	    if (protocol == null || protocol.trim().isEmpty())
-	        protocol = "ewsstore";
-	    return protocol;
-	}
-	
-	@Override
-	protected boolean protocolConnect(String host, int port, String user, String password) throws MessagingException {
-	    if (user == null)
-	        user = session.getProperty("mail." + getProtocol() + ".user");
+    private String getProtocol() {
+        if (protocol == null)
+            protocol = session.getProperty("mail.store.protocol");
+        if (protocol == null || protocol.trim().isEmpty())
+            protocol = "ewsstore";
+        return protocol;
+    }
+
+    @Override
+    protected boolean protocolConnect(String host, int port, String user, String password) throws MessagingException {
+        if (user == null)
+            user = session.getProperty("mail." + getProtocol() + ".user");
         if (password == null)
             password = session.getProperty("mail." + getProtocol() + ".password");
-		service = Util.getExchangeService(getProtocol(), host, port, user, password, session);
-		if (service == null) {
-			return false;
-		} else {
-			return true;
-		}
-	}
-	
-	protected WellKnownFolderName getWellKnownFolderName(String name) {
-	    if (name == null)
-	        return WellKnownFolderName.Root;
-	    name = name.trim();
-	    for (WellKnownFolderName id : WellKnownFolderName.values()) {
-	        if (id.toString().equalsIgnoreCase(name))
-	            return id;
-	    }
-	    return WellKnownFolderName.Inbox;
-	}
-	
-	@Override
-	public EwsFolder getDefaultFolder() throws MessagingException {
-	    if (defaultFolder == null)
-	        defaultFolder = new EwsFolder(this, new FolderId(WellKnownFolderName.MsgFolderRoot));
-	    return defaultFolder;
-	}
+        service = Util.getExchangeService(getProtocol(), host, port, user, password, session);
+        return service != null;
+    }
 
-	@Override
-	public EwsFolder getFolder(String name) throws MessagingException {
-		try {
-		    return getDefaultFolder().getFolder(name);
-		} catch (Exception e) {
-			throw new MessagingException(e.getMessage(), e);
-		}
-	}
+    protected Optional<WellKnownFolderName> getWellKnownFolderName(String name) {
+        if (name == null)
+            return Optional.of(WellKnownFolderName.Root);
+        name = name.trim();
+        for (WellKnownFolderName id : WellKnownFolderName.values()) {
+            if (id.toString().equalsIgnoreCase(name)) {
+                return Optional.of(id);
+            }
+        }
+        return Optional.empty();
+    }
+
+    @Override
+    public EwsFolder getDefaultFolder() throws MessagingException {
+        if (defaultFolder == null)
+            defaultFolder = new EwsFolder(this, new FolderId(WellKnownFolderName.MsgFolderRoot));
+        return defaultFolder;
+    }
+
+    @Override
+    public EwsFolder getFolder(String name) throws MessagingException {
+        Optional<WellKnownFolderName> wellKnownFolderName = getWellKnownFolderName(name);
+        if (wellKnownFolderName.isPresent()) {
+            System.out.println(String.format("Opening WellKnownFolderName matching %s", name));
+            return new EwsFolder(this, new FolderId(wellKnownFolderName.get()));
+        }
+        try {
+            return getDefaultFolder().getFolder(name);
+        } catch (Exception e) {
+            throw new MessagingException(e.getMessage(), e);
+        }
+    }
 
     @Override
     @SuppressWarnings("resource")
-	public EwsFolder getFolder(URLName paramUrl) throws MessagingException {
-	    if (paramUrl == null)
-	        return getDefaultFolder();
+    public EwsFolder getFolder(URLName paramUrl) throws MessagingException {
+        if (paramUrl == null)
+            return getDefaultFolder();
         try {
             URL url = paramUrl.getURL();
-    	    if (url == null)
-    	        return getDefaultFolder();
-    	    String path = url.getPath();
-    	    if (path == null)
+            if (url == null)
                 return getDefaultFolder();
-    	    if (path.startsWith("/"))
-    	        path = path.substring(1);
-    	    EwsFolder result = getDefaultFolder();
-    	    String[] parts = path.split(Pattern.quote("/"));
-    	    for (String part : parts) {
-    	        if (part == null || part.length() == 0)
-    	            continue;
-    	        result = result.getFolder(part);
-    	    }
-    	    if (result == null)
-    	        throw new MessagingException("Folder not found");
-    		return result;
+            String path = url.getPath();
+            if (path == null)
+                return getDefaultFolder();
+            if (path.startsWith("/"))
+                path = path.substring(1);
+            EwsFolder result = getDefaultFolder();
+            String[] parts = path.split(Pattern.quote("/"));
+            for (String part : parts) {
+                if (part == null || part.length() == 0)
+                    continue;
+                result = result.getFolder(part);
+            }
+            if (result == null)
+                throw new MessagingException("Folder not found");
+            return result;
         } catch (MalformedURLException e) {
             MessagingException err = new MessagingException(e.getMessage(), e);
             err.setStackTrace(e.getStackTrace());
             throw err;
         }
-	}
-	
-	protected ExchangeService getService() {
-		return service;
-	}
-
-	//Make visible
-	@Override
-    protected void notifyFolderListeners(int type, Folder folder) {
-    	super.notifyFolderListeners(type, folder);
     }
-    
+
+    protected ExchangeService getService() {
+        return service;
+    }
+
+    //Make visible
+    @Override
+    protected void notifyFolderListeners(int type, Folder folder) {
+        super.notifyFolderListeners(type, folder);
+    }
+
     @Override
     //Make visible
     protected void notifyConnectionListeners(int type) {
-    	super.notifyConnectionListeners(type);
+        super.notifyConnectionListeners(type);
     }
-    
+
     protected Configuration getConfiguration() {
-    	return Util.getConfiguration(session);
+        return Util.getConfiguration(session);
     }
 }
