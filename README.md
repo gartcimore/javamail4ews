@@ -1,9 +1,9 @@
 # javamail4ews
 This is a bridge between [Exchange web services](https://github.com/OfficeDev/ews-java-api) java API and JavaMail API
-
+This is a fork of org.sourceforge.net.javamail4ews
 You will need the EWS url to connect, something like *https://owa.example.com/ews/exchange.asmx* and maybe a username and password
 
-#Reading emails
+# Reading emails
 ```java
 //Initalize a session
 Session session = Session.getInstance(new Properties());
@@ -22,7 +22,7 @@ folder.open(Folder.READ_ONLY);
 Message[] messages = folder.getMessages();
 ```
 
-#Sending emails
+# Sending emails
 ```java
 //Initalize a session
 Session session = Session.getInstance(new Properties());
