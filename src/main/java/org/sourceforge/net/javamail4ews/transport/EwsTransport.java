@@ -18,25 +18,42 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 package org.sourceforge.net.javamail4ews.transport;
 
-import com.sun.mail.smtp.SMTPSendFailedException;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.Enumeration;
+import java.util.UUID;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.mail.*;
+
+import javax.mail.Address;
+import javax.mail.BodyPart;
+import javax.mail.Header;
+import javax.mail.Message;
+import javax.mail.MessagingException;
+import javax.mail.Multipart;
+import javax.mail.Part;
+import javax.mail.Session;
+import javax.mail.Transport;
+import javax.mail.URLName;
 import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeMessage;
+
 import microsoft.exchange.webservices.data.core.ExchangeService;
 import microsoft.exchange.webservices.data.core.enumeration.property.BodyType;
+import microsoft.exchange.webservices.data.core.enumeration.property.DefaultExtendedPropertySet;
+import microsoft.exchange.webservices.data.core.enumeration.property.MapiPropertyType;
 import microsoft.exchange.webservices.data.core.enumeration.property.WellKnownFolderName;
 import microsoft.exchange.webservices.data.core.exception.service.local.ServiceLocalException;
 import microsoft.exchange.webservices.data.core.service.item.EmailMessage;
 import microsoft.exchange.webservices.data.property.complex.EmailAddress;
 import microsoft.exchange.webservices.data.property.complex.FileAttachment;
 import microsoft.exchange.webservices.data.property.complex.MessageBody;
+import microsoft.exchange.webservices.data.property.definition.ExtendedPropertyDefinition;
+
 import org.apache.commons.configuration.Configuration;
 import org.sourceforge.net.javamail4ews.util.Util;
+
+import com.sun.mail.smtp.SMTPSendFailedException;
 
 public class EwsTransport extends Transport {
 	private static final String TEXT_STAR = "text/*";
@@ -117,9 +134,16 @@ public class EwsTransport extends Transport {
 		}
 	}
 
-	private void createHeaders(EmailMessage msg, Message message) {
-		//TODO create headers
-		//TODO Add X-Creator
+	private void createHeaders(EmailMessage msg, Message message) throws Exception {
+		if(message != null){
+			Enumeration<Header> headers = message.getAllHeaders();
+			ExtendedPropertyDefinition extendedPropertyDefinition = null;
+			while(headers.hasMoreElements()){
+				Header header = (Header) headers.nextElement();
+				extendedPropertyDefinition = new ExtendedPropertyDefinition(DefaultExtendedPropertySet.InternetHeaders, header.getName(),MapiPropertyType.String);
+				msg.setExtendedProperty(extendedPropertyDefinition,header.getValue());
+			}
+		}
 	}
 
 	public void sendMessage(Message pMessage, Address[] addresses, Address[] ccaddresses) throws MessagingException {
@@ -171,15 +195,21 @@ public class EwsTransport extends Transport {
         } else if (part.isMimeType(MULTIPART_ALTERNATIVE) && !treatAsAttachement) {
             logger.log(Level.FINE, "mime-type is '" + part.getContentType() + "'");
             Multipart mp = (Multipart) part.getContent();
-            String text = "";
+            String text1 = "";
+            String text2 = "";
             for (int i = 0; i < mp.getCount(); i++) {
                 Part p = mp.getBodyPart(i);
                 if (p.isMimeType(TEXT_HTML)) {
-                    text += p.getContent();
+                    text1 += p.getContent();
+                    mb.setText(text1);
+                    mb.setBodyType(BodyType.HTML);
+                }
+                if (p.isMimeType(TEXT_PLAIN)) {
+                    text2 += p.getContent();
+                    mb.setText(text2);
+                    mb.setBodyType(BodyType.Text);
                 }
             }
-            mb.setText(text);
-            mb.setBodyType(BodyType.HTML);
             if (!treatAsAttachement)
                 createBodyFromPart(msg, part, true);
         } 
