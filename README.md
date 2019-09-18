@@ -11,6 +11,7 @@ You will need the EWS url to connect, something like *https://owa.example.com/ew
 //Initalize a session
 Session session = Session.getInstance(new Properties());
 
+
 //Get the EWS store implementation
 Store store = session.getStore("ewsstore");
 
