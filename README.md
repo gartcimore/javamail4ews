@@ -3,6 +3,8 @@ This is a bridge between [Exchange web services](https://github.com/OfficeDev/ew
 This is a fork of org.sourceforge.net.javamail4ews
 You will need the EWS url to connect, something like *https://owa.example.com/ews/exchange.asmx* and maybe a username and password
 
+https://travis-ci.com/gartcimore/javamail4ews.svg?branch=master
+
 # Reading emails
 ```java
 //Initalize a session
