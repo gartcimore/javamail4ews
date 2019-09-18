@@ -5,7 +5,7 @@ script: mvn clean test package
 
 deploy:
   provider: releases
-  api_key: "GITHUB OAUTH TOKEN"
+  api_key: $GITHUB_TOKEN
   file_glob: true
   file:
     - target/lib/*
