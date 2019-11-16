@@ -20,5 +20,6 @@ jobs:
       with:
         repo_token: ${{ secrets.GITHUB_TOKEN }}
         file: target/
+        asset_name: javamail4ews
         tag: ${{ github.ref }}
         overwrite: true
