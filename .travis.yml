@@ -3,13 +3,13 @@ jdk:
   - openjdk8
 script: mvn clean test package
 
-deploy:
-  provider: releases
-  api_key: $GITHUB_TOKEN
-  file_glob: true
-  file:
-    - target/lib/*
-    - "target/javamail4ews.jar"
-  skip_cleanup: true
-  on:
-    branch: master
+#deploy:
+#  provider: releases
+#  api_key: $GITHUB_TOKEN
+#  file_glob: true
+#  file:
+#    - target/lib/*
+#    - "target/javamail4ews.jar"
+#  skip_cleanup: true
+#  on:
+#    branch: master
