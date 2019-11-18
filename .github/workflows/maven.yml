@@ -19,7 +19,7 @@ jobs:
       uses: svenstaro/upload-release-action@v1-release
       with:
         repo_token: ${{ secrets.GITHUB_TOKEN }}
-        file: javamail4ews/target/
+        file: /home/runner/work/javamail4ews/javamail4ews/target/
         asset_name: javamail4ews
         tag: ${{ github.ref }}
         overwrite: true
