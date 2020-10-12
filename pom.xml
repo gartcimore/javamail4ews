@@ -26,9 +26,8 @@
         <skipUnitTests>false</skipUnitTests>
         <maven-site-plugin.skip>false</maven-site-plugin.skip>
 
-        <java.version>1.8</java.version>
-        <maven.compiler.source>1.7</maven.compiler.source>
-        <maven.compiler.target>1.7</maven.compiler.target>
+        <java.release.version>8</java.release.version>
+        <maven.compiler.release>8</maven.compiler.release>
         <maven.surefire.plugin.version>2.19.1</maven.surefire.plugin.version>
         <build.helper.maven.plugin.version>1.12</build.helper.maven.plugin.version>
 
@@ -75,10 +74,9 @@
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-compiler-plugin</artifactId>
-                    <version>3.5.1</version>
+                    <version>3.8.0</version>
                     <configuration>
-                        <source>${java.version}</source>
-                        <target>${java.version}</target>
+                        <release>${java.release.version}</release>
                     </configuration>
                 </plugin>
                 <plugin>
