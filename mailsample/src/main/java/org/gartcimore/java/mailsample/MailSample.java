@@ -1,6 +1,10 @@
 package org.gartcimore.java.mailsample;
 
 import javax.mail.*;
+import javax.mail.internet.InternetAddress;
+import javax.mail.internet.MimeBodyPart;
+import javax.mail.internet.MimeMessage;
+import javax.mail.internet.MimeMultipart;
 import java.util.Arrays;
 import java.util.Properties;
 
@@ -22,17 +26,17 @@ public class MailSample {
 
         //Connect to the Exchange server - No port required.
         //Also connect() might be used if the session is initialized with the known mail.* properties
-        System.out.println(String.format("connecting to %s", url));
+        System.out.printf("connecting to %s%n", url);
         store.connect(url, "username@outlook.com", "MyP4ssW0rd!");
 
-        System.out.println(String.format("connected to %s", url));
+        System.out.printf("connected to %s%n", url);
         System.out.println("get default folder");
         Folder folder = store.getDefaultFolder();
         System.out.println("open default folder as read-only");
         folder.open(Folder.READ_ONLY);
         System.out.println("done");
         Message[] messages = folder.getMessages();
-        System.out.println(String.format("there is %d messages", messages.length));
+        System.out.printf("there is %d messages%n", messages.length);
 
         if (messages.length > 0) {
             System.out.println(Arrays.toString(messages[0].getFrom()));
@@ -41,7 +45,26 @@ public class MailSample {
         final Folder sentItems = store.getFolder("SentItems");
         sentItems.open(Folder.READ_ONLY);
         int sentItemsMessageCount = sentItems.getMessageCount();
-        System.out.println(String.format("there is %d sent messages", sentItemsMessageCount));
+        System.out.printf("there is %d sent messages%n", sentItemsMessageCount);
+
+        //Get the EWS transport implementation
+        Transport lTransport = session.getTransport("ewstransport");
+
+        //Connect to the Exchange server - No port required.
+        //Also connect() might be used if the session is initialized with the known mail.* properties
+        lTransport.connect(url, "username@outlook.com", "MyP4ssW0rd!");
+
+        //Create a message as before
+        MimeMessage lMessage = new MimeMessage(session);
+        lMessage.setRecipient(Message.RecipientType.TO, new InternetAddress("user@example.org"));
+        lMessage.setSubject("Hello World!");
+        lMessage.setText("Hello World!");
+
+        lMessage.addHeaderLine("X_MY_Custom_Header=myValue");
+
+        //Send the mail via EWS
+        lTransport.sendMessage(lMessage, lMessage.getRecipients(Message.RecipientType.TO));
+
 
     }
 }
