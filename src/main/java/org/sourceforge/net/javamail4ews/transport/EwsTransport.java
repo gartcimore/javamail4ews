@@ -182,16 +182,16 @@ public class EwsTransport extends Transport {
     private MessageBody createBodyFromPart(EmailMessage ewsMessage, Part part, boolean treatAsAttachement)
             throws MessagingException, IOException, ServiceLocalException {
 
-        MessageBody mb = new MessageBody();
+        MessageBody messageBody = new MessageBody();
         if (part.isMimeType(TEXT_PLAIN)) {
             String s = (String) part.getContent();
-            mb.setBodyType(BodyType.Text);
-            mb.setText(s);
+            messageBody.setBodyType(BodyType.Text);
+            messageBody.setText(s);
         } else if (part.isMimeType(TEXT_STAR)) {
             logger.log(Level.FINE, "mime-type is '" + part.getContentType() + "' handling as " + TEXT_HTML);
             String s = (String) part.getContent();
-            mb.setBodyType(BodyType.HTML);
-            mb.setText(s);
+            messageBody.setBodyType(BodyType.HTML);
+            messageBody.setText(s);
         } else if (part.isMimeType(MULTIPART_ALTERNATIVE) && !treatAsAttachement) {
             logger.log(Level.FINE, "mime-type is '" + part.getContentType() + "'");
             Multipart mp = (Multipart) part.getContent();
@@ -201,13 +201,13 @@ public class EwsTransport extends Transport {
                 Part p = mp.getBodyPart(i);
                 if (p.isMimeType(TEXT_HTML)) {
                     text1 += p.getContent();
-                    mb.setText(text1);
-                    mb.setBodyType(BodyType.HTML);
+                    messageBody.setText(text1);
+                    messageBody.setBodyType(BodyType.HTML);
                 }
                 if (p.isMimeType(TEXT_PLAIN)) {
                     text2 += p.getContent();
-                    mb.setText(text2);
-                    mb.setBodyType(BodyType.Text);
+                    messageBody.setText(text2);
+                    messageBody.setBodyType(BodyType.Text);
                 }
             }
             if (!treatAsAttachement)
@@ -218,7 +218,7 @@ public class EwsTransport extends Transport {
             Multipart mp = (Multipart) part.getContent();
             int start = 0;
             if (!treatAsAttachement) {
-                mb = createBodyFromPart(ewsMessage, mp.getBodyPart(start), false);
+                messageBody = createBodyFromPart(ewsMessage, mp.getBodyPart(start), false);
                 start++;
             }
             for (int i = start; i < mp.getCount(); i++) {
@@ -247,7 +247,7 @@ public class EwsTransport extends Transport {
                 lNewAttachment.setIsContactPhoto(false);
             }
         }
-        return mb;
+        return messageBody;
     }
 
     private void createAddresses(EmailMessage ewsMessage, Message javamailMessage, Address[] pToAddresses,
