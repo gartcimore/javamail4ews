@@ -71,9 +71,9 @@ public class EwsMessage extends MimeMessage {
   @Override
   protected InputStream getContentStream() throws MessagingException {
     try {
-      PropertySet oPropSetForBodyText = new PropertySet(BasePropertySet.FirstClassProperties);
-      oPropSetForBodyText.add(ItemSchema.MimeContent);
-      emailMessage.load(oPropSetForBodyText);
+      PropertySet propertyDefinitionBases = new PropertySet(BasePropertySet.FirstClassProperties);
+      propertyDefinitionBases.add(ItemSchema.MimeContent);
+      emailMessage.load(propertyDefinitionBases);
       byte[] lContent = emailMessage.getMimeContent().getContent();
 
       return new ByteArrayInputStream(lContent);
