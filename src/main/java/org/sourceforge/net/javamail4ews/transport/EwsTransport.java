@@ -94,16 +94,16 @@ public class EwsTransport extends Transport {
 		}
 	}
 	
-	public void sendMessage(Message pMessage, Address[] addresses, Address[] ccaddresses, Address[] bccaddresses) throws MessagingException {
+	public void sendMessage(Message javaMailMessage, Address[] addresses, Address[] ccaddresses, Address[] bccaddresses) throws MessagingException {
 		try {
-			EmailMessage msg = new EmailMessage(getService());
-			createHeaders(msg, pMessage);
+			EmailMessage ewsMessage = new EmailMessage(getService());
+			createHeaders(ewsMessage, javaMailMessage);
 
-			createAddresses(msg, pMessage, addresses, ccaddresses, bccaddresses);
-			createSubject(msg, pMessage);
-			createBody(msg, pMessage);
+			createAddresses(ewsMessage, javaMailMessage, addresses, ccaddresses, bccaddresses);
+			createSubject(ewsMessage, javaMailMessage);
+			createBody(ewsMessage, javaMailMessage);
 
-			sendMessage(msg);
+			sendMessage(ewsMessage);
 			
 		} catch (MessagingException e) {
 			throw e;
@@ -113,10 +113,10 @@ public class EwsTransport extends Transport {
                     "The user account which was used to submit this request does not have the right to send mail"
                             + " on behalf of the specified sending account")) {
                 SMTPSendFailedException ex = new SMTPSendFailedException("send", 551,
-                        "Could not send : insufficient right to send on behalf of '" + pMessage.getFrom()[0] + "'", e,
-                        null, pMessage.getAllRecipients(), null);
+                        "Could not send : insufficient right to send on behalf of '" + javaMailMessage.getFrom()[0] + "'", e,
+                        null, javaMailMessage.getAllRecipients(), null);
                 // (
-                // "Could not send : insufficient right to send on behalf of " + pMessage.getFrom()[0], e);
+                // "Could not send : insufficient right to send on behalf of " + javaMailMessage.getFrom()[0], e);
                 throw ex;
             } else
                 if(message != null)
@@ -134,25 +134,25 @@ public class EwsTransport extends Transport {
 		}
 	}
 
-	private void createHeaders(EmailMessage msg, Message message) throws Exception {
-		if(message != null){
-			Enumeration<Header> headers = message.getAllHeaders();
+	private void createHeaders(EmailMessage ewsMessage, Message javamailMessage) throws Exception {
+		if(javamailMessage != null){
+			Enumeration<Header> headers = javamailMessage.getAllHeaders();
 			ExtendedPropertyDefinition extendedPropertyDefinition = null;
 			while(headers.hasMoreElements()){
 				Header header = (Header) headers.nextElement();
 				extendedPropertyDefinition = new ExtendedPropertyDefinition(DefaultExtendedPropertySet.InternetHeaders, header.getName(),MapiPropertyType.String);
-				msg.setExtendedProperty(extendedPropertyDefinition,header.getValue());
+				ewsMessage.setExtendedProperty(extendedPropertyDefinition,header.getValue());
 			}
 		}
 	}
 
-	public void sendMessage(Message pMessage, Address[] addresses, Address[] ccaddresses) throws MessagingException {
-		sendMessage(pMessage,addresses,ccaddresses, new Address[0]);
+	public void sendMessage(Message javamailMessage, Address[] addresses, Address[] ccaddresses) throws MessagingException {
+		sendMessage(javamailMessage,addresses,ccaddresses, new Address[0]);
 	}
 	
 	@Override
-	public void sendMessage(Message pMessage, Address[] addresses) throws MessagingException {
-		sendMessage(pMessage,addresses, new Address[0]);
+	public void sendMessage(Message javamailMessage, Address[] addresses) throws MessagingException {
+		sendMessage(javamailMessage,addresses, new Address[0]);
 	}
 
 	private byte[] bodyPart2ByteArray(BodyPart pPart) throws IOException, MessagingException {
@@ -161,10 +161,10 @@ public class EwsTransport extends Transport {
 		return os.toByteArray();
 	}
 	
-	private void createBody(EmailMessage msg, Message message) throws Exception {
+	private void createBody(EmailMessage ewsMessage, Message javamailMessage) throws Exception {
 		MessageBody mb;
-		mb = createBodyFromPart(msg,message, false);
-		msg.setBody(mb);
+		mb = createBodyFromPart(ewsMessage,javamailMessage, false);
+		ewsMessage.setBody(mb);
 	}
 	
 	private String getFirstHeaderValue(BodyPart part, String pKey) throws MessagingException {
@@ -179,7 +179,7 @@ public class EwsTransport extends Transport {
 		return null;
 	}
     
-    private MessageBody createBodyFromPart(EmailMessage msg, Part part, boolean treatAsAttachement)
+    private MessageBody createBodyFromPart(EmailMessage ewsMessage, Part part, boolean treatAsAttachement)
             throws MessagingException, IOException, ServiceLocalException {
 
         MessageBody mb = new MessageBody();
@@ -211,14 +211,14 @@ public class EwsTransport extends Transport {
                 }
             }
             if (!treatAsAttachement)
-                createBodyFromPart(msg, part, true);
+                createBodyFromPart(ewsMessage, part, true);
         } 
         else if (part.isMimeType(MULTIPART_STAR) && !part.isMimeType(MULTIPART_ALTERNATIVE)) {
             logger.log(Level.FINE, "mime-type is '" + part.getContentType() + "'");
             Multipart mp = (Multipart) part.getContent();
             int start = 0;
             if (!treatAsAttachement) {
-                mb = createBodyFromPart(msg, mp.getBodyPart(start), false);
+                mb = createBodyFromPart(ewsMessage, mp.getBodyPart(start), false);
                 start++;
             }
             for (int i = start; i < mp.getCount(); i++) {
@@ -229,7 +229,7 @@ public class EwsTransport extends Transport {
 
                 String lContentId = getFirstHeaderValue(lBodyPart, "Content-ID");
                 if (lContentId != null) {
-                    lNewAttachment = msg.getAttachments().addFileAttachment(lContentId, lContentBytes);
+                    lNewAttachment = ewsMessage.getAttachments().addFileAttachment(lContentId, lContentBytes);
                     lNewAttachment.setContentId(lContentId);
                     lNewAttachment.setIsInline(true);
 
@@ -237,7 +237,7 @@ public class EwsTransport extends Transport {
                 } else {
                     String fileName = lBodyPart.getFileName();
                     fileName = (fileName == null ? "" + i : fileName);
-                    lNewAttachment = msg.getAttachments().addFileAttachment(fileName, lContentBytes);
+                    lNewAttachment = ewsMessage.getAttachments().addFileAttachment(fileName, lContentBytes);
                     lNewAttachment.setIsInline(false);
                     lNewAttachment.setContentType(lBodyPart.getContentType());
 
@@ -250,11 +250,11 @@ public class EwsTransport extends Transport {
         return mb;
     }
 
-    private void createAddresses(EmailMessage pEmailMessage, Message pMessage, Address[] pToAddresses,
+    private void createAddresses(EmailMessage ewsMessage, Message javamailMessage, Address[] pToAddresses,
             Address[] pCcAddresses, Address[] pBccAddresses) throws Exception {
 
-        if (pMessage instanceof MimeMessage) {
-            MimeMessage lMimeMessage = (MimeMessage) pMessage;
+        if (javamailMessage instanceof MimeMessage) {
+            MimeMessage lMimeMessage = (MimeMessage) javamailMessage;
 
             if (pToAddresses.length <= 0) {
                 pToAddresses = lMimeMessage.getRecipients(javax.mail.Message.RecipientType.TO);
@@ -268,25 +268,25 @@ public class EwsTransport extends Transport {
             }
         }
         
-        Address[] from = pMessage.getFrom();
+        Address[] from = javamailMessage.getFrom();
         if(from != null && from.length > 0) {
-            pEmailMessage.setFrom(emailAddressFromInternetAddress(from[0]));
+            ewsMessage.setFrom(emailAddressFromInternetAddress(from[0]));
         }
         
         for (Address aAddress : pToAddresses) {
             logger.log(Level.INFO, "Adding adress {0} as TO recepient", aAddress.toString());
-            pEmailMessage.getToRecipients().add(emailAddressFromInternetAddress(aAddress));
+            ewsMessage.getToRecipients().add(emailAddressFromInternetAddress(aAddress));
         }
         if (pCcAddresses != null) {
             for (Address aAddress : pCcAddresses) {
                 logger.log(Level.INFO, "Adding adress {0} as CC recepient", aAddress.toString());
-                pEmailMessage.getCcRecipients().add(emailAddressFromInternetAddress(aAddress));
+                ewsMessage.getCcRecipients().add(emailAddressFromInternetAddress(aAddress));
             }
         }
         if (pBccAddresses != null) {
             for (Address aAddress : pBccAddresses) {
                 logger.log(Level.INFO, "Adding adress {0} as BCC recepient", aAddress.toString());
-                pEmailMessage.getBccRecipients().add(emailAddressFromInternetAddress(aAddress));
+                ewsMessage.getBccRecipients().add(emailAddressFromInternetAddress(aAddress));
             }
         }
     }
