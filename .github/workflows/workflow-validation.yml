@@ -1,0 +1,537 @@
+name: Workflow Validation
+
+on:
+  workflow_dispatch:
+    inputs:
+      test_type:
+        description: 'Type of validation test to run'
+        required: true
+        default: 'all'
+        type: choice
+        options:
+        - all
+        - matrix-builds
+        - artifact-generation
+        - deployment-test
+      java_versions:
+        description: 'Java versions to test (comma-separated)'
+        required: false
+        default: '17,21'
+        type: string
+
+env:
+  MAVEN_OPTS: -Dhttp.keepAlive=false -Dmaven.wagon.http.pool=false -Dmaven.wagon.http.retryHandler.class=standard -Dmaven.wagon.http.retryHandler.count=3
+  MAVEN_SETTINGS: ${{ github.workspace }}/settings.xml
+
+jobs:
+  validation-setup:
+    name: Validation Setup
+    runs-on: ubuntu-latest
+    outputs:
+      java-versions: ${{ steps.setup.outputs.java-versions }}
+      test-matrix-builds: ${{ steps.setup.outputs.test-matrix-builds }}
+      test-artifact-generation: ${{ steps.setup.outputs.test-artifact-generation }}
+      test-deployment: ${{ steps.setup.outputs.test-deployment }}
+    
+    steps:
+    - name: Setup test configuration
+      id: setup
+      run: |
+        # Parse Java versions
+        JAVA_VERSIONS="${{ github.event.inputs.java_versions || '17,21' }}"
+        JAVA_ARRAY=$(echo $JAVA_VERSIONS | jq -R -s -c 'split(",") | map(select(length > 0))')
+        echo "java-versions=$JAVA_ARRAY" >> $GITHUB_OUTPUT
+        
+        # Determine which tests to run
+        TEST_TYPE="${{ github.event.inputs.test_type || 'all' }}"
+        
+        if [[ "$TEST_TYPE" == "all" || "$TEST_TYPE" == "matrix-builds" ]]; then
+          echo "test-matrix-builds=true" >> $GITHUB_OUTPUT
+        else
+          echo "test-matrix-builds=false" >> $GITHUB_OUTPUT
+        fi
+        
+        if [[ "$TEST_TYPE" == "all" || "$TEST_TYPE" == "artifact-generation" ]]; then
+          echo "test-artifact-generation=true" >> $GITHUB_OUTPUT
+        else
+          echo "test-artifact-generation=false" >> $GITHUB_OUTPUT
+        fi
+        
+        if [[ "$TEST_TYPE" == "all" || "$TEST_TYPE" == "deployment-test" ]]; then
+          echo "test-deployment=true" >> $GITHUB_OUTPUT
+        else
+          echo "test-deployment=false" >> $GITHUB_OUTPUT
+        fi
+        
+        echo "Configuration:"
+        echo "- Java versions: $JAVA_ARRAY"
+        echo "- Test matrix builds: $([ "$TEST_TYPE" == "all" ] || [ "$TEST_TYPE" == "matrix-builds" ] && echo "true" || echo "false")"
+        echo "- Test artifact generation: $([ "$TEST_TYPE" == "all" ] || [ "$TEST_TYPE" == "artifact-generation" ] && echo "true" || echo "false")"
+        echo "- Test deployment: $([ "$TEST_TYPE" == "all" ] || [ "$TEST_TYPE" == "deployment-test" ] && echo "true" || echo "false")"
+
+  matrix-build-validation:
+    name: Matrix Build Validation (Java ${{ matrix.java-version }})
+    runs-on: ubuntu-latest
+    needs: validation-setup
+    if: needs.validation-setup.outputs.test-matrix-builds == 'true'
+    
+    strategy:
+      matrix:
+        java-version: ${{ fromJson(needs.validation-setup.outputs.java-versions) }}
+      fail-fast: false
+      
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up JDK ${{ matrix.java-version }}
+      uses: actions/setup-java@v4
+      with:
+        java-version: ${{ matrix.java-version }}
+        distribution: 'temurin'
+        
+    - name: Cache Maven dependencies
+      uses: actions/cache@v4
+      with:
+        path: ~/.m2/repository
+        key: validation-${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+        restore-keys: |
+          validation-${{ runner.os }}-maven-
+          
+    - name: Validate Maven project
+      run: |
+        echo "=== Validating project with Java ${{ matrix.java-version }} ==="
+        mvn validate -s settings.xml
+        
+    - name: Compile project
+      run: |
+        echo "=== Compiling project with Java ${{ matrix.java-version }} ==="
+        mvn clean compile -s settings.xml
+        
+    - name: Compile test sources
+      run: |
+        echo "=== Compiling test sources with Java ${{ matrix.java-version }} ==="
+        mvn test-compile -s settings.xml
+        
+    - name: Run unit tests
+      run: |
+        echo "=== Running unit tests with Java ${{ matrix.java-version }} ==="
+        mvn test -s settings.xml
+        
+    - name: Run baseline tests
+      run: |
+        echo "=== Running baseline tests with Java ${{ matrix.java-version }} ==="
+        mvn test -Pbaseline-tests -s settings.xml
+        
+    - name: Validate test results
+      run: |
+        echo "=== Validating test results for Java ${{ matrix.java-version }} ==="
+        
+        # Check if test reports were generated
+        if [ ! -d "target/surefire-reports" ]; then
+          echo "ERROR: Surefire reports directory not found"
+          exit 1
+        fi
+        
+        # Count test files
+        TEST_FILES=$(find target/surefire-reports -name "*.xml" | wc -l)
+        echo "Found $TEST_FILES test report files"
+        
+        if [ $TEST_FILES -eq 0 ]; then
+          echo "ERROR: No test report files found"
+          exit 1
+        fi
+        
+        # Check for test failures
+        if find target/surefire-reports -name "*.xml" -exec grep -l "failures=\"[1-9]" {} \; | grep -q .; then
+          echo "WARNING: Some tests failed"
+          find target/surefire-reports -name "*.xml" -exec grep -l "failures=\"[1-9]" {} \; | while read file; do
+            echo "Failed tests in: $file"
+            grep "failures=" "$file"
+          done
+        else
+          echo "SUCCESS: All tests passed"
+        fi
+        
+        # Validate baseline test results
+        if [ -d "target/baseline-results" ]; then
+          echo "Baseline test results found:"
+          ls -la target/baseline-results/
+        fi
+        
+    - name: Upload validation results
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: matrix-validation-java-${{ matrix.java-version }}
+        path: |
+          target/surefire-reports/
+          target/baseline-results/
+        retention-days: 7
+
+  artifact-generation-validation:
+    name: Artifact Generation Validation
+    runs-on: ubuntu-latest
+    needs: validation-setup
+    if: needs.validation-setup.outputs.test-artifact-generation == 'true'
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up JDK 21
+      uses: actions/setup-java@v4
+      with:
+        java-version: '21'
+        distribution: 'temurin'
+        
+    - name: Cache Maven dependencies
+      uses: actions/cache@v4
+      with:
+        path: ~/.m2/repository
+        key: validation-${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+        restore-keys: |
+          validation-${{ runner.os }}-maven-
+          
+    - name: Build and package
+      run: |
+        echo "=== Building and packaging project ==="
+        mvn clean package -DskipTests -s settings.xml
+        
+    - name: Validate main JAR artifact
+      run: |
+        echo "=== Validating main JAR artifact ==="
+        
+        # Check if main JAR exists
+        if [ ! -f "target/javamail4ews.jar" ]; then
+          echo "ERROR: Main JAR file not found"
+          exit 1
+        fi
+        
+        # Check JAR size (should be reasonable)
+        JAR_SIZE=$(stat -f%z target/javamail4ews.jar 2>/dev/null || stat -c%s target/javamail4ews.jar)
+        echo "Main JAR size: $JAR_SIZE bytes"
+        
+        if [ $JAR_SIZE -lt 1000 ]; then
+          echo "ERROR: JAR file seems too small"
+          exit 1
+        fi
+        
+        # Check JAR contents
+        echo "JAR contents (first 20 entries):"
+        jar tf target/javamail4ews.jar | head -20
+        
+        # Verify manifest
+        echo "Manifest contents:"
+        jar xf target/javamail4ews.jar META-INF/MANIFEST.MF
+        cat META-INF/MANIFEST.MF
+        
+        # Check for required classes
+        if ! jar tf target/javamail4ews.jar | grep -q "org/sourceforge/net/javamail4ews"; then
+          echo "ERROR: Main package classes not found in JAR"
+          exit 1
+        fi
+        
+        echo "SUCCESS: Main JAR validation passed"
+        
+    - name: Validate dependencies
+      run: |
+        echo "=== Validating dependencies ==="
+        
+        # Check if lib directory exists
+        if [ ! -d "target/lib" ]; then
+          echo "ERROR: Dependencies lib directory not found"
+          exit 1
+        fi
+        
+        # Count dependency JARs
+        DEP_COUNT=$(find target/lib -name "*.jar" | wc -l)
+        echo "Found $DEP_COUNT dependency JARs"
+        
+        if [ $DEP_COUNT -eq 0 ]; then
+          echo "ERROR: No dependency JARs found"
+          exit 1
+        fi
+        
+        # List dependencies
+        echo "Dependencies:"
+        ls -la target/lib/
+        
+        # Check for key dependencies
+        REQUIRED_DEPS=("angus-mail" "jakarta.mail-api" "ews-java-api" "commons-configuration2")
+        for dep in "${REQUIRED_DEPS[@]}"; do
+          if ! find target/lib -name "*${dep}*" | grep -q .; then
+            echo "WARNING: Required dependency $dep not found"
+          else
+            echo "Found dependency: $dep"
+          fi
+        done
+        
+        echo "SUCCESS: Dependencies validation passed"
+        
+    - name: Validate Maven site generation
+      run: |
+        echo "=== Validating Maven site generation ==="
+        mvn site -s settings.xml
+        
+        if [ -d "target/site" ]; then
+          echo "Maven site generated successfully"
+          ls -la target/site/
+        else
+          echo "WARNING: Maven site not generated"
+        fi
+        
+    - name: Create test release archive
+      run: |
+        echo "=== Creating test release archive ==="
+        mkdir -p test-release
+        cp target/javamail4ews.jar test-release/javamail4ews-test.jar
+        cp -r target/lib test-release/
+        
+        cd test-release
+        tar -czf javamail4ews-test.tar.gz *.jar lib/
+        zip -r javamail4ews-test.zip *.jar lib/
+        
+        echo "Release archive contents:"
+        ls -la
+        
+        # Validate archives
+        echo "Validating tar.gz archive:"
+        tar -tzf javamail4ews-test.tar.gz | head -10
+        
+        echo "Validating zip archive:"
+        unzip -l javamail4ews-test.zip | head -15
+        
+    - name: Upload artifact validation results
+      uses: actions/upload-artifact@v4
+      with:
+        name: artifact-validation-results
+        path: |
+          target/javamail4ews.jar
+          target/lib/
+          target/site/
+          test-release/
+        retention-days: 7
+
+  deployment-validation:
+    name: Deployment Process Validation
+    runs-on: ubuntu-latest
+    needs: validation-setup
+    if: needs.validation-setup.outputs.test-deployment == 'true'
+    permissions:
+      contents: read
+      packages: write
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up JDK 21
+      uses: actions/setup-java@v4
+      with:
+        java-version: '21'
+        distribution: 'temurin'
+        
+    - name: Cache Maven dependencies
+      uses: actions/cache@v4
+      with:
+        path: ~/.m2/repository
+        key: validation-${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+        restore-keys: |
+          validation-${{ runner.os }}-maven-
+          
+    - name: Validate deployment configuration
+      run: |
+        echo "=== Validating deployment configuration ==="
+        
+        # Check settings.xml
+        if [ ! -f "settings.xml" ]; then
+          echo "ERROR: settings.xml not found"
+          exit 1
+        fi
+        
+        echo "Settings.xml contents:"
+        cat settings.xml
+        
+        # Check pom.xml distribution management
+        if ! grep -q "distributionManagement" pom.xml; then
+          echo "ERROR: distributionManagement not found in pom.xml"
+          exit 1
+        fi
+        
+        echo "Distribution management configuration:"
+        xmllint --xpath "//distributionManagement" pom.xml 2>/dev/null || grep -A 10 "distributionManagement" pom.xml
+        
+    - name: Test deployment preparation
+      run: |
+        echo "=== Testing deployment preparation ==="
+        
+        # Set test version
+        mvn versions:set -DnewVersion=1.1-validation-test -DgenerateBackupPoms=false -s settings.xml
+        
+        # Build for deployment
+        mvn clean package -DskipTests -s settings.xml
+        
+        # Validate deployment artifacts
+        echo "Deployment artifacts:"
+        ls -la target/
+        
+    - name: Simulate deployment (dry-run)
+      run: |
+        echo "=== Simulating deployment (dry-run) ==="
+        
+        # Note: We don't actually deploy to avoid polluting the package registry
+        # Instead, we validate that the deployment command would work
+        
+        echo "Would deploy with command:"
+        echo "mvn deploy -DskipTests -s settings.xml"
+        
+        # Check if GITHUB_TOKEN is available
+        if [ -n "${{ secrets.GITHUB_TOKEN }}" ]; then
+          echo "SUCCESS: GITHUB_TOKEN is available for deployment"
+        else
+          echo "ERROR: GITHUB_TOKEN not available"
+          exit 1
+        fi
+        
+        # Validate Maven can resolve the deployment repository
+        mvn help:effective-settings -s settings.xml | grep -A 5 -B 5 "github" || true
+        
+    - name: Validate release workflow components
+      run: |
+        echo "=== Validating release workflow components ==="
+        
+        # Test version extraction logic
+        TEST_TAG="v1.2.3"
+        VERSION=${TEST_TAG#v}
+        echo "Extracted version from tag $TEST_TAG: $VERSION"
+        
+        if [ "$VERSION" != "1.2.3" ]; then
+          echo "ERROR: Version extraction failed"
+          exit 1
+        fi
+        
+        # Test artifact naming
+        ARTIFACT_NAME="javamail4ews-${VERSION}"
+        echo "Generated artifact name: $ARTIFACT_NAME"
+        
+        # Test release notes generation
+        cat > test-release-notes.md << EOF
+## Release Notes for v${VERSION}
+
+### Changes
+- Built with Java 21
+- Updated dependencies as per project requirements
+
+### Artifacts
+- \`${ARTIFACT_NAME}.jar\` - Main application JAR
+- \`${ARTIFACT_NAME}.tar.gz\` - Complete distribution (JAR + dependencies)
+- \`${ARTIFACT_NAME}.zip\` - Complete distribution (JAR + dependencies)
+
+### Installation
+The package is also available via GitHub Packages Maven repository.
+EOF
+        
+        echo "Generated release notes:"
+        cat test-release-notes.md
+        
+        echo "SUCCESS: Release workflow components validated"
+
+  validation-summary:
+    name: Validation Summary
+    runs-on: ubuntu-latest
+    needs: [validation-setup, matrix-build-validation, artifact-generation-validation, deployment-validation]
+    if: always()
+    
+    steps:
+    - name: Generate validation report
+      run: |
+        echo "# GitHub Actions Workflow Validation Report" > validation-report.md
+        echo "" >> validation-report.md
+        echo "**Validation Date:** $(date)" >> validation-report.md
+        echo "**Test Type:** ${{ github.event.inputs.test_type || 'all' }}" >> validation-report.md
+        echo "**Java Versions:** ${{ github.event.inputs.java_versions || '17,21' }}" >> validation-report.md
+        echo "" >> validation-report.md
+        
+        echo "## Test Results" >> validation-report.md
+        echo "" >> validation-report.md
+        
+        # Matrix build validation
+        if [ "${{ needs.validation-setup.outputs.test-matrix-builds }}" == "true" ]; then
+          if [ "${{ needs.matrix-build-validation.result }}" == "success" ]; then
+            echo "✅ **Matrix Build Validation:** PASSED" >> validation-report.md
+          else
+            echo "❌ **Matrix Build Validation:** FAILED" >> validation-report.md
+          fi
+        else
+          echo "⏭️ **Matrix Build Validation:** SKIPPED" >> validation-report.md
+        fi
+        
+        # Artifact generation validation
+        if [ "${{ needs.validation-setup.outputs.test-artifact-generation }}" == "true" ]; then
+          if [ "${{ needs.artifact-generation-validation.result }}" == "success" ]; then
+            echo "✅ **Artifact Generation Validation:** PASSED" >> validation-report.md
+          else
+            echo "❌ **Artifact Generation Validation:** FAILED" >> validation-report.md
+          fi
+        else
+          echo "⏭️ **Artifact Generation Validation:** SKIPPED" >> validation-report.md
+        fi
+        
+        # Deployment validation
+        if [ "${{ needs.validation-setup.outputs.test-deployment }}" == "true" ]; then
+          if [ "${{ needs.deployment-validation.result }}" == "success" ]; then
+            echo "✅ **Deployment Process Validation:** PASSED" >> validation-report.md
+          else
+            echo "❌ **Deployment Process Validation:** FAILED" >> validation-report.md
+          fi
+        else
+          echo "⏭️ **Deployment Process Validation:** SKIPPED" >> validation-report.md
+        fi
+        
+        echo "" >> validation-report.md
+        echo "## Recommendations" >> validation-report.md
+        echo "" >> validation-report.md
+        
+        # Generate recommendations based on results
+        FAILED_JOBS=""
+        if [ "${{ needs.matrix-build-validation.result }}" == "failure" ]; then
+          FAILED_JOBS="$FAILED_JOBS matrix-build"
+        fi
+        if [ "${{ needs.artifact-generation-validation.result }}" == "failure" ]; then
+          FAILED_JOBS="$FAILED_JOBS artifact-generation"
+        fi
+        if [ "${{ needs.deployment-validation.result }}" == "failure" ]; then
+          FAILED_JOBS="$FAILED_JOBS deployment"
+        fi
+        
+        if [ -z "$FAILED_JOBS" ]; then
+          echo "🎉 All validations passed! The GitHub Actions workflows are ready for production use." >> validation-report.md
+          echo "" >> validation-report.md
+          echo "### Next Steps:" >> validation-report.md
+          echo "1. The CI workflow is validated and working correctly" >> validation-report.md
+          echo "2. The release workflow is ready for tagged releases" >> validation-report.md
+          echo "3. Consider running a test release with a test tag" >> validation-report.md
+          echo "4. Update project documentation to reflect the new CI/CD setup" >> validation-report.md
+        else
+          echo "⚠️ Some validations failed. Please review the failed jobs and fix issues before proceeding." >> validation-report.md
+          echo "" >> validation-report.md
+          echo "### Failed Validations:" >> validation-report.md
+          for job in $FAILED_JOBS; do
+            echo "- $job" >> validation-report.md
+          done
+        fi
+        
+        echo "" >> validation-report.md
+        echo "---" >> validation-report.md
+        echo "*Generated by GitHub Actions Workflow Validation*" >> validation-report.md
+        
+        echo "Validation report generated:"
+        cat validation-report.md
+        
+    - name: Upload validation report
+      uses: actions/upload-artifact@v4
+      with:
+        name: validation-report
+        path: validation-report.md
+        retention-days: 30

@@ -12,10 +12,10 @@ import microsoft.exchange.webservices.data.core.service.schema.ItemSchema;
 import microsoft.exchange.webservices.data.property.complex.EmailAddress;
 import microsoft.exchange.webservices.data.property.complex.EmailAddressCollection;
 
-import javax.mail.Flags.Flag;
-import javax.mail.Message.RecipientType;
-import javax.mail.MessagingException;
-import javax.mail.internet.InternetAddress;
+import jakarta.mail.Flags.Flag;
+import jakarta.mail.Message.RecipientType;
+import jakarta.mail.MessagingException;
+import jakarta.mail.internet.InternetAddress;
 
 import java.io.ByteArrayInputStream;
 import java.io.UnsupportedEncodingException;
@@ -86,7 +86,7 @@ public class EwsMailConverter {
 	
 	protected void setSubject() throws MessagingException, ServiceLocalException {
 		String lSubject = emailMessage.getSubject();
-		//EWS reports NULL subjects - causes NPEs in javax.mail
+		//EWS reports NULL subjects - causes NPEs in jakarta.mail
 		if (lSubject == null) {
 			lSubject = "";
 		}

@@ -13,39 +13,60 @@
         <skipUnitTests>false</skipUnitTests>
         <maven-site-plugin.skip>false</maven-site-plugin.skip>
 
-        <java.version>1.8</java.version>
-        <maven.compiler.source>1.8</maven.compiler.source>
-        <maven.compiler.target>1.8</maven.compiler.target>
+        <java.version>21</java.version>
+        <maven.compiler.source>21</maven.compiler.source>
+        <maven.compiler.target>21</maven.compiler.target>
+        <maven.compiler.release>21</maven.compiler.release>
         <maven.surefire.plugin.version>2.19.1</maven.surefire.plugin.version>
         <build.helper.maven.plugin.version>1.12</build.helper.maven.plugin.version>
 
-        <version.commons.configuration>1.10</version.commons.configuration>
-        <version.slf4j.api>1.7.9</version.slf4j.api>
+        <version.commons.configuration>2.10.1</version.commons.configuration>
         <version.microsoft.ewsjava.api>2.0</version.microsoft.ewsjava.api>
-        <version.javax.mail>1.4.2</version.javax.mail>
+        <version.jakarta.mail>2.0.1</version.jakarta.mail>
         <version.findbugs.annotations>2.0.3</version.findbugs.annotations>
         <version.maven.site.plugin>3.4</version.maven.site.plugin>
+        <version.commons.codec>1.16.0</version.commons.codec>
+        <version.slf4j.api>2.0.9</version.slf4j.api>
+        <version.jaxws.api>4.0.1</version.jaxws.api>
     </properties>
     
 
     <dependencies>
         <dependency>
-            <groupId>javax.mail</groupId>
-            <artifactId>mail</artifactId>
-            <version>${version.javax.mail}</version>
+            <groupId>org.eclipse.angus</groupId>
+            <artifactId>angus-mail</artifactId>
+            <version>2.0.1</version>
         </dependency>
         <dependency>
             <groupId>org.gartcimore.java</groupId>
             <artifactId>javamail4ews</artifactId>
-            <version>1.0</version>
+            <version>1.1-SNAPSHOT</version>
         </dependency>
-        <!-- https://mvnrepository.com/artifact/javax.xml.ws/jaxws-api -->
+        <!-- https://mvnrepository.com/artifact/jakarta.xml.ws/jakarta.xml.ws-api -->
         <dependency>
-            <groupId>javax.xml.ws</groupId>
-            <artifactId>jaxws-api</artifactId>
-            <version>2.2.11</version>
+            <groupId>jakarta.xml.ws</groupId>
+            <artifactId>jakarta.xml.ws-api</artifactId>
+            <version>${version.jaxws.api}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+            <version>${version.slf4j.api}</version>
         </dependency>
 
     </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.11.0</version>
+                <configuration>
+                    <release>${maven.compiler.release}</release>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
 
 </project>

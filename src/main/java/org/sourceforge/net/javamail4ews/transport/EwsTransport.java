@@ -25,18 +25,18 @@ import java.util.UUID;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import javax.mail.Address;
-import javax.mail.BodyPart;
-import javax.mail.Header;
-import javax.mail.Message;
-import javax.mail.MessagingException;
-import javax.mail.Multipart;
-import javax.mail.Part;
-import javax.mail.Session;
-import javax.mail.Transport;
-import javax.mail.URLName;
-import javax.mail.internet.InternetAddress;
-import javax.mail.internet.MimeMessage;
+import jakarta.mail.Address;
+import jakarta.mail.BodyPart;
+import jakarta.mail.Header;
+import jakarta.mail.Message;
+import jakarta.mail.MessagingException;
+import jakarta.mail.Multipart;
+import jakarta.mail.Part;
+import jakarta.mail.Session;
+import jakarta.mail.Transport;
+import jakarta.mail.URLName;
+import jakarta.mail.internet.InternetAddress;
+import jakarta.mail.internet.MimeMessage;
 
 import microsoft.exchange.webservices.data.core.ExchangeService;
 import microsoft.exchange.webservices.data.core.enumeration.property.BodyType;
@@ -50,10 +50,10 @@ import microsoft.exchange.webservices.data.property.complex.FileAttachment;
 import microsoft.exchange.webservices.data.property.complex.MessageBody;
 import microsoft.exchange.webservices.data.property.definition.ExtendedPropertyDefinition;
 
-import org.apache.commons.configuration.Configuration;
+import org.apache.commons.configuration2.Configuration;
 import org.sourceforge.net.javamail4ews.util.Util;
 
-import com.sun.mail.smtp.SMTPSendFailedException;
+import org.eclipse.angus.mail.smtp.SMTPSendFailedException;
 
 public class EwsTransport extends Transport {
 	private static final String TEXT_STAR = "text/*";
@@ -182,16 +182,16 @@ public class EwsTransport extends Transport {
     private MessageBody createBodyFromPart(EmailMessage ewsMessage, Part part, boolean treatAsAttachement)
             throws MessagingException, IOException, ServiceLocalException {
 
-        MessageBody mb = new MessageBody();
+        MessageBody messageBody = new MessageBody();
         if (part.isMimeType(TEXT_PLAIN)) {
             String s = (String) part.getContent();
-            mb.setBodyType(BodyType.Text);
-            mb.setText(s);
+            messageBody.setBodyType(BodyType.Text);
+            messageBody.setText(s);
         } else if (part.isMimeType(TEXT_STAR)) {
             logger.log(Level.FINE, "mime-type is '" + part.getContentType() + "' handling as " + TEXT_HTML);
             String s = (String) part.getContent();
-            mb.setBodyType(BodyType.HTML);
-            mb.setText(s);
+            messageBody.setBodyType(BodyType.HTML);
+            messageBody.setText(s);
         } else if (part.isMimeType(MULTIPART_ALTERNATIVE) && !treatAsAttachement) {
             logger.log(Level.FINE, "mime-type is '" + part.getContentType() + "'");
             Multipart mp = (Multipart) part.getContent();
@@ -201,13 +201,13 @@ public class EwsTransport extends Transport {
                 Part p = mp.getBodyPart(i);
                 if (p.isMimeType(TEXT_HTML)) {
                     text1 += p.getContent();
-                    mb.setText(text1);
-                    mb.setBodyType(BodyType.HTML);
+                    messageBody.setText(text1);
+                    messageBody.setBodyType(BodyType.HTML);
                 }
                 if (p.isMimeType(TEXT_PLAIN)) {
                     text2 += p.getContent();
-                    mb.setText(text2);
-                    mb.setBodyType(BodyType.Text);
+                    messageBody.setText(text2);
+                    messageBody.setBodyType(BodyType.Text);
                 }
             }
             if (!treatAsAttachement)
@@ -218,7 +218,7 @@ public class EwsTransport extends Transport {
             Multipart mp = (Multipart) part.getContent();
             int start = 0;
             if (!treatAsAttachement) {
-                mb = createBodyFromPart(ewsMessage, mp.getBodyPart(start), false);
+                messageBody = createBodyFromPart(ewsMessage, mp.getBodyPart(start), false);
                 start++;
             }
             for (int i = start; i < mp.getCount(); i++) {
@@ -247,7 +247,7 @@ public class EwsTransport extends Transport {
                 lNewAttachment.setIsContactPhoto(false);
             }
         }
-        return mb;
+        return messageBody;
     }
 
     private void createAddresses(EmailMessage ewsMessage, Message javamailMessage, Address[] pToAddresses,
@@ -257,14 +257,14 @@ public class EwsTransport extends Transport {
             MimeMessage lMimeMessage = (MimeMessage) javamailMessage;
 
             if (pToAddresses.length <= 0) {
-                pToAddresses = lMimeMessage.getRecipients(javax.mail.Message.RecipientType.TO);
+                pToAddresses = lMimeMessage.getRecipients(jakarta.mail.Message.RecipientType.TO);
             }
             if (pCcAddresses.length <= 0) {
-                pCcAddresses = lMimeMessage.getRecipients(javax.mail.Message.RecipientType.CC);
+                pCcAddresses = lMimeMessage.getRecipients(jakarta.mail.Message.RecipientType.CC);
             }
 
             if (pBccAddresses.length <= 0) {
-                pBccAddresses = lMimeMessage.getRecipients(javax.mail.Message.RecipientType.BCC);
+                pBccAddresses = lMimeMessage.getRecipients(jakarta.mail.Message.RecipientType.BCC);
             }
         }
         

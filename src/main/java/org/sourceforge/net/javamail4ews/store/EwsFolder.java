@@ -23,16 +23,16 @@ import java.util.Date;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.mail.Flags;
-import javax.mail.Flags.Flag;
-import javax.mail.FolderNotFoundException;
-import javax.mail.Message;
-import javax.mail.MessagingException;
-import javax.mail.event.ConnectionEvent;
-import javax.mail.event.FolderEvent;
-import javax.mail.event.FolderListener;
-import javax.mail.search.FlagTerm;
-import javax.mail.search.SearchTerm;
+import jakarta.mail.Flags;
+import jakarta.mail.Flags.Flag;
+import jakarta.mail.FolderNotFoundException;
+import jakarta.mail.Message;
+import jakarta.mail.MessagingException;
+import jakarta.mail.event.ConnectionEvent;
+import jakarta.mail.event.FolderEvent;
+import jakarta.mail.event.FolderListener;
+import jakarta.mail.search.FlagTerm;
+import jakarta.mail.search.SearchTerm;
 import microsoft.exchange.webservices.data.core.ExchangeService;
 import microsoft.exchange.webservices.data.core.PropertySet;
 import microsoft.exchange.webservices.data.core.enumeration.property.BasePropertySet;
@@ -55,12 +55,12 @@ import microsoft.exchange.webservices.data.search.FindItemsResults;
 import microsoft.exchange.webservices.data.search.FolderView;
 import microsoft.exchange.webservices.data.search.ItemView;
 import microsoft.exchange.webservices.data.search.filter.SearchFilter;
-import org.apache.commons.configuration.Configuration;
+import org.apache.commons.configuration2.Configuration;
 import org.sourceforge.net.javamail4ews.util.EwsMailConverter;
 import org.sourceforge.net.javamail4ews.util.Util;
 
 //TODO Disconnected event for ConnectionListeners
-public class EwsFolder extends javax.mail.Folder {
+public class EwsFolder extends jakarta.mail.Folder {
     private final class FolderListenerPublisher implements FolderListener {
         @Override
         public void folderCreated(FolderEvent e) {
@@ -144,7 +144,7 @@ public class EwsFolder extends javax.mail.Folder {
 
     @Override
     public void close(boolean expunge) throws MessagingException {
-        if (mode == javax.mail.Folder.READ_WRITE) {
+        if (mode == jakarta.mail.Folder.READ_WRITE) {
             try {
                 if (expunge) {
                     expunge();
@@ -200,7 +200,7 @@ public class EwsFolder extends javax.mail.Folder {
         }
         try {
             if (recurse) {
-                for (javax.mail.Folder aFolder : list()) {
+                for (jakarta.mail.Folder aFolder : list()) {
                     aFolder.delete(recurse);
                 }
             } else {
@@ -375,7 +375,7 @@ public class EwsFolder extends javax.mail.Folder {
 
     @Override
     public int getType() throws MessagingException {
-        return javax.mail.Folder.HOLDS_MESSAGES | javax.mail.Folder.HOLDS_FOLDERS;
+        return jakarta.mail.Folder.HOLDS_MESSAGES | jakarta.mail.Folder.HOLDS_FOLDERS;
     }
 
     @Override
@@ -465,7 +465,7 @@ public class EwsFolder extends javax.mail.Folder {
     }
 
     @Override
-    public boolean renameTo(javax.mail.Folder f) throws MessagingException {
+    public boolean renameTo(jakarta.mail.Folder f) throws MessagingException {
         if (isOpen()) {
             throw new IllegalStateException("Folder must be closed!");
         }
