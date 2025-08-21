@@ -11,9 +11,9 @@ You will need the EWS url to connect, something like *https://owa.example.com/ew
 - Maven 3.6.0 or higher
 - Access to Microsoft Exchange Web Services
 
-## Recent Updates (January 2025)
+## Recent Updates (2025)
 
-This project has been upgraded with modern dependencies and Java 21 compatibility:
+This project has been upgraded with recent dependencies and Java 21 compatibility:
 - Migrated from javax.mail to Jakarta Mail API 2.1.1
 - Updated to Java 21 (from Java 8)
 - Upgraded all Maven plugins to latest versions
@@ -77,6 +77,43 @@ lMessage.setText("Hello World!");
 lTransport.sendMessage(lMessage, lMessage.getRecipients(RecipientType.TO));
 ```
 
+## Sample Application
+The `mailsample` module provides a working example:
+
+```bash
+# Build the sample
+cd mailsample
+mvn clean compile
+
+# Run the sample (requires EWS configuration)
+mvn exec:java -Dexec.mainClass="org.gartcimore.java.mailsample.MailSample"
+```
+
+## Configuration
+
+### EWS Connection Properties
+Create a properties file or set system properties:
+
+```properties
+# EWS server configuration
+mail.ewsstore.server=https://owa.example.com/ews/exchange.asmx
+mail.ewsstore.username=user@example.com
+mail.ewsstore.password=your-password
+
+# Optional: Trust all certificates (for testing only)
+mail.ewsstore.trustall=true
+```
+
+### JavaMail Session Configuration
+```java
+Properties props = new Properties();
+props.setProperty("mail.store.protocol", "ewsstore");
+props.setProperty("mail.transport.protocol", "ewstransport");
+props.setProperty("mail.ewsstore.server", "https://owa.example.com/ews/exchange.asmx");
+
+Session session = Session.getInstance(props);
+```
+
 ## Building and Testing
 
 ### Build Requirements
@@ -132,39 +169,3 @@ mvn dependency:analyze
 mvn org.owasp:dependency-check-maven:check
 ```
 
-### Sample Application
-The `mailsample` module provides a working example:
-
-```bash
-# Build the sample
-cd mailsample
-mvn clean compile
-
-# Run the sample (requires EWS configuration)
-mvn exec:java -Dexec.mainClass="org.gartcimore.java.mailsample.MailSample"
-```
-
-## Configuration
-
-### EWS Connection Properties
-Create a properties file or set system properties:
-
-```properties
-# EWS server configuration
-mail.ewsstore.server=https://owa.example.com/ews/exchange.asmx
-mail.ewsstore.username=user@example.com
-mail.ewsstore.password=your-password
-
-# Optional: Trust all certificates (for testing only)
-mail.ewsstore.trustall=true
-```
-
-### JavaMail Session Configuration
-```java
-Properties props = new Properties();
-props.setProperty("mail.store.protocol", "ewsstore");
-props.setProperty("mail.transport.protocol", "ewstransport");
-props.setProperty("mail.ewsstore.server", "https://owa.example.com/ews/exchange.asmx");
-
-Session session = Session.getInstance(props);
-```
