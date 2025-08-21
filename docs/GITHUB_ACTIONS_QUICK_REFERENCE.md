@@ -191,10 +191,11 @@ if: github.event.pull_request.draft == false
 
 ## Migration from Travis CI
 
-### Key differences:
-- Configuration in `.github/workflows/` instead of `.travis.yml`
+### Key differences from Travis CI:
+- Configuration in `.github/workflows/` instead of `.travis.yml` (now removed)
 - YAML syntax differences (jobs vs script)
 - Better caching and artifact management
+- Native GitHub integration
 - Native GitHub integration
 
 ### What changed:

@@ -102,7 +102,7 @@ public class WorkflowValidationTest {
         // Check for validation jobs
         assertTrue(content.contains("matrix-build-validation:"), "Should have matrix build validation");
         assertTrue(content.contains("artifact-generation-validation:"), "Should have artifact generation validation");
-        assertTrue(content.contains("deployment-validation:"), "Should have deployment validation");
+        assertTrue(content.contains("validation-summary:"), "Should have validation summary");
         
         System.out.println("✅ Workflow validation file validation passed");
     }

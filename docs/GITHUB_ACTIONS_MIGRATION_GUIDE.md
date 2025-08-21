@@ -7,7 +7,7 @@ This guide documents the migration from Travis CI to GitHub Actions for the Java
 ## Summary of Changes
 
 ### CI/CD Platform Migration
-- **Previous**: Travis CI (.travis.yml)
+- **Previous**: Travis CI (.travis.yml) - **REMOVED**
 - **Current**: GitHub Actions (.github/workflows/)
 - **Impact**: Native GitHub integration, better performance, enhanced features
 
@@ -28,7 +28,7 @@ This guide documents the migration from Travis CI to GitHub Actions for the Java
 
 ### Configuration Format
 
-#### Travis CI (.travis.yml)
+#### Travis CI (.travis.yml) - REMOVED
 ```yaml
 language: java
 jdk:
