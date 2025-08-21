@@ -297,7 +297,7 @@
                         <format>JSON</format>
                     </formats>
                     <outputDirectory>${project.build.directory}/security-reports</outputDirectory>
-                    <autoUpdate>false</autoUpdate>
+                    <autoUpdate>true</autoUpdate>
                     <skipSystemScope>true</skipSystemScope>
                     <skipTestScope>true</skipTestScope>
                 </configuration>
