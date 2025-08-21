@@ -7,7 +7,7 @@
 
     <groupId>org.gartcimore.java</groupId>
     <artifactId>javamail4ews</artifactId>
-    <version>1.0</version>
+    <version>1.1-SNAPSHOT</version>
     <packaging>jar</packaging>
 
     <name>JavaMail 4 EWS</name>
@@ -26,45 +26,102 @@
         <skipUnitTests>false</skipUnitTests>
         <maven-site-plugin.skip>false</maven-site-plugin.skip>
 
-        <java.release.version>8</java.release.version>
-        <maven.compiler.release>8</maven.compiler.release>
-        <maven.surefire.plugin.version>2.19.1</maven.surefire.plugin.version>
+        <java.release.version>21</java.release.version>
+        <maven.compiler.release>21</maven.compiler.release>
+        <maven.surefire.plugin.version>3.0.0-M9</maven.surefire.plugin.version>
         <build.helper.maven.plugin.version>1.12</build.helper.maven.plugin.version>
 
-        <version.commons.configuration>1.10</version.commons.configuration>
-        <version.commons.codec>1.9</version.commons.codec>
-        <version.slf4j.api>1.7.25</version.slf4j.api>
+        <version.commons.configuration>2.10.1</version.commons.configuration>
+
         <version.microsoft.ewsjava.api>2.0</version.microsoft.ewsjava.api>
-        <version.javax.mail>1.6.1</version.javax.mail>
+        <version.jakarta.mail>2.0.1</version.jakarta.mail>
+        <version.jakarta.mail.api>2.1.1</version.jakarta.mail.api>
+        <version.jakarta.activation>2.1.1</version.jakarta.activation>
+        <version.httpcomponents.client>4.4.1</version.httpcomponents.client>
+        <version.httpcomponents.core>4.4.1</version.httpcomponents.core>
         <version.findbugs.annotations>2.0.3</version.findbugs.annotations>
-        <version.maven.site.plugin>3.4</version.maven.site.plugin>
+        <version.maven.site.plugin>4.0.0-M13</version.maven.site.plugin>
+        <version.maven.jar.plugin>3.3.0</version.maven.jar.plugin>
+        <version.maven.dependency.plugin>3.6.1</version.maven.dependency.plugin>
+        <version.maven.project.info.reports.plugin>3.5.0</version.maven.project.info.reports.plugin>
     </properties>
 
     <dependencies>
+        <!-- JavaMail Implementation -->
         <dependency>
-            <groupId>com.sun.mail</groupId>
-            <artifactId>javax.mail</artifactId>
-            <version>${version.javax.mail}</version>
+            <groupId>org.eclipse.angus</groupId>
+            <artifactId>angus-mail</artifactId>
+            <version>2.0.1</version>
+        </dependency>
+        
+        <!-- Explicitly declare transitive dependencies that are used directly -->
+        <dependency>
+            <groupId>jakarta.mail</groupId>
+            <artifactId>jakarta.mail-api</artifactId>
+            <version>${version.jakarta.mail.api}</version>
         </dependency>
         <dependency>
-            <groupId>commons-configuration</groupId>
-            <artifactId>commons-configuration</artifactId>
+            <groupId>jakarta.activation</groupId>
+            <artifactId>jakarta.activation-api</artifactId>
+            <version>${version.jakarta.activation}</version>
+        </dependency>
+        
+        <!-- Apache Commons Dependencies -->
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-configuration2</artifactId>
             <version>${version.commons.configuration}</version>
         </dependency>
+        <!-- commons-beanutils required by commons-configuration2 at runtime -->
         <dependency>
-            <groupId>commons-codec</groupId>
-            <artifactId>commons-codec</artifactId>
-            <version>${version.commons.codec}</version>
+            <groupId>commons-beanutils</groupId>
+            <artifactId>commons-beanutils</artifactId>
+            <version>1.9.4</version>
         </dependency>
-        <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-api</artifactId>
-            <version>${version.slf4j.api}</version>
-        </dependency>
+        
+        <!-- Note: commons-codec and slf4j-api removed as unused dependencies -->
+        
+        <!-- EWS Java API with explicit HTTP client dependencies -->
 		<dependency>
 			<groupId>com.microsoft.ews-java-api</groupId>
 			<artifactId>ews-java-api</artifactId>
 			<version>${version.microsoft.ewsjava.api}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.httpcomponents</groupId>
+			<artifactId>httpclient</artifactId>
+			<version>${version.httpcomponents.client}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.httpcomponents</groupId>
+			<artifactId>httpcore</artifactId>
+			<version>${version.httpcomponents.core}</version>
+		</dependency>
+		
+		<!-- Test Dependencies -->
+		<dependency>
+			<groupId>org.junit.jupiter</groupId>
+			<artifactId>junit-jupiter</artifactId>
+			<version>5.9.3</version>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.junit.jupiter</groupId>
+			<artifactId>junit-jupiter-api</artifactId>
+			<version>5.9.3</version>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.junit.platform</groupId>
+			<artifactId>junit-platform-suite</artifactId>
+			<version>1.9.3</version>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.junit.platform</groupId>
+			<artifactId>junit-platform-suite-api</artifactId>
+			<version>1.9.3</version>
+			<scope>test</scope>
 		</dependency>
     </dependencies>
 
@@ -74,7 +131,7 @@
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-compiler-plugin</artifactId>
-                    <version>3.8.0</version>
+                    <version>3.11.0</version>
                     <configuration>
                         <release>${java.release.version}</release>
                     </configuration>
@@ -138,7 +195,7 @@
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-project-info-reports-plugin</artifactId>
-                    <version>2.8.1</version>
+                    <version>${version.maven.project.info.reports.plugin}</version>
                     <configuration>
                         <dependencyLocationsEnabled>false</dependencyLocationsEnabled>
                     </configuration>
@@ -166,7 +223,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-jar-plugin</artifactId>
-                <version>2.4</version>
+                <version>${version.maven.jar.plugin}</version>
                 <configuration>
                     <archive>
                         <manifest>
@@ -179,6 +236,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-dependency-plugin</artifactId>
+                <version>${version.maven.dependency.plugin}</version>
                 <executions>
                     <execution>
                         <id>copy-dependencies-no-version</id>
@@ -200,6 +258,21 @@
 
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>${maven.surefire.plugin.version}</version>
+                <configuration>
+                    <skipTests>${skipUnitTests}</skipTests>
+                    <includes>
+                        <include>**/*Test.java</include>
+                        <include>**/*TestSuite.java</include>
+                    </includes>
+                    <systemPropertyVariables>
+                        <baseline.test.timestamp>${maven.build.timestamp}</baseline.test.timestamp>
+                    </systemPropertyVariables>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-site-plugin</artifactId>
                 <version>${version.maven.site.plugin}</version>
                 <configuration>
@@ -209,9 +282,24 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-project-info-reports-plugin</artifactId>
-                <version>2.8.1</version>
+                <version>${version.maven.project.info.reports.plugin}</version>
                 <configuration>
                     <dependencyLocationsEnabled>false</dependencyLocationsEnabled>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.owasp</groupId>
+                <artifactId>dependency-check-maven</artifactId>
+                <version>9.0.7</version>
+                <configuration>
+                    <formats>
+                        <format>HTML</format>
+                        <format>JSON</format>
+                    </formats>
+                    <outputDirectory>${project.build.directory}/security-reports</outputDirectory>
+                    <autoUpdate>true</autoUpdate>
+                    <skipSystemScope>true</skipSystemScope>
+                    <skipTestScope>true</skipTestScope>
                 </configuration>
             </plugin>
         </plugins>
@@ -219,6 +307,63 @@
 
         <finalName>javamail4ews</finalName>
     </build>
+
+    <profiles>
+        <profile>
+            <id>baseline-tests</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-surefire-plugin</artifactId>
+                        <configuration>
+                            <includes>
+                                <include>**/BaselineTestSuite.java</include>
+                            </includes>
+                            <reportFormat>plain</reportFormat>
+                            <useFile>false</useFile>
+                        </configuration>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-dependency-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>analyze-dependencies</id>
+                                <phase>test</phase>
+                                <goals>
+                                    <goal>analyze</goal>
+                                    <goal>tree</goal>
+                                </goals>
+                                <configuration>
+                                    <outputFile>${project.build.directory}/baseline-results/dependency-analysis.txt</outputFile>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+        <profile>
+            <id>performance-tests</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-surefire-plugin</artifactId>
+                        <configuration>
+                            <includes>
+                                <include>**/BaselinePerformanceTest.java</include>
+                            </includes>
+                            <systemPropertyVariables>
+                                <java.awt.headless>true</java.awt.headless>
+                            </systemPropertyVariables>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
 
     <scm>
         <connection>scm:git:git@github.com:gartcimore/javamail4ews.git</connection>

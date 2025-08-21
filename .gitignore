@@ -357,3 +357,13 @@ $RECYCLE.BIN/
 *.lnk
 
 # End of https://www.gitignore.io/api/vim,osx,java,ruby,macos,emacs,windows,textmate,intellij,sublimetext,linux
+# Project specific exclusions
+dependency-tree.txt
+current-dependency-tree.txt
+resolved-dependency-tree.txt
+
+# Kiro IDE files
+.kiro/
+
+# Security reports
+target/security-reports/

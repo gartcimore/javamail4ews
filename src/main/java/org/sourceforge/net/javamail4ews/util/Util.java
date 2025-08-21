@@ -26,19 +26,20 @@ import java.sql.SQLException;
 import java.text.ParseException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.mail.AuthenticationFailedException;
-import javax.mail.MessagingException;
-import javax.mail.Session;
+import jakarta.mail.AuthenticationFailedException;
+import jakarta.mail.MessagingException;
+import jakarta.mail.Session;
 import microsoft.exchange.webservices.data.core.ExchangeService;
 import microsoft.exchange.webservices.data.core.enumeration.misc.ExchangeVersion;
 import microsoft.exchange.webservices.data.core.enumeration.property.WellKnownFolderName;
 import microsoft.exchange.webservices.data.core.service.folder.Folder;
 import microsoft.exchange.webservices.data.credential.ExchangeCredentials;
 import microsoft.exchange.webservices.data.credential.WebCredentials;
-import org.apache.commons.configuration.CompositeConfiguration;
-import org.apache.commons.configuration.Configuration;
-import org.apache.commons.configuration.ConfigurationException;
-import org.apache.commons.configuration.PropertiesConfiguration;
+import org.apache.commons.configuration2.CompositeConfiguration;
+import org.apache.commons.configuration2.Configuration;
+import org.apache.commons.configuration2.ex.ConfigurationException;
+import org.apache.commons.configuration2.PropertiesConfiguration;
+import org.apache.commons.configuration2.builder.fluent.Configurations;
 import org.sourceforge.net.javamail4ews.api.TrustAllExchangeService;
 
 public final class Util {
@@ -202,7 +203,11 @@ public final class Util {
 			CompositeConfiguration config = new CompositeConfiguration();
 			config.addConfiguration(prop);
 			URL lURL = Thread.currentThread().getContextClassLoader().getResource("javamail-ews-bridge.default.properties");
-			config.addConfiguration(new PropertiesConfiguration(lURL));
+			
+			// Use Configurations builder for loading properties file in commons-configuration2
+			Configurations configs = new Configurations();
+			PropertiesConfiguration defaultProps = configs.properties(lURL);
+			config.addConfiguration(defaultProps);
 			return config;
 		} catch (ConfigurationException e) {
 		    RuntimeException ex = new RuntimeException(e.getMessage(), e);

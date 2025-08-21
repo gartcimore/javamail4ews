@@ -25,18 +25,18 @@ import java.util.UUID;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import javax.mail.Address;
-import javax.mail.BodyPart;
-import javax.mail.Header;
-import javax.mail.Message;
-import javax.mail.MessagingException;
-import javax.mail.Multipart;
-import javax.mail.Part;
-import javax.mail.Session;
-import javax.mail.Transport;
-import javax.mail.URLName;
-import javax.mail.internet.InternetAddress;
-import javax.mail.internet.MimeMessage;
+import jakarta.mail.Address;
+import jakarta.mail.BodyPart;
+import jakarta.mail.Header;
+import jakarta.mail.Message;
+import jakarta.mail.MessagingException;
+import jakarta.mail.Multipart;
+import jakarta.mail.Part;
+import jakarta.mail.Session;
+import jakarta.mail.Transport;
+import jakarta.mail.URLName;
+import jakarta.mail.internet.InternetAddress;
+import jakarta.mail.internet.MimeMessage;
 
 import microsoft.exchange.webservices.data.core.ExchangeService;
 import microsoft.exchange.webservices.data.core.enumeration.property.BodyType;
@@ -50,10 +50,10 @@ import microsoft.exchange.webservices.data.property.complex.FileAttachment;
 import microsoft.exchange.webservices.data.property.complex.MessageBody;
 import microsoft.exchange.webservices.data.property.definition.ExtendedPropertyDefinition;
 
-import org.apache.commons.configuration.Configuration;
+import org.apache.commons.configuration2.Configuration;
 import org.sourceforge.net.javamail4ews.util.Util;
 
-import com.sun.mail.smtp.SMTPSendFailedException;
+import org.eclipse.angus.mail.smtp.SMTPSendFailedException;
 
 public class EwsTransport extends Transport {
 	private static final String TEXT_STAR = "text/*";
@@ -257,14 +257,14 @@ public class EwsTransport extends Transport {
             MimeMessage lMimeMessage = (MimeMessage) javamailMessage;
 
             if (pToAddresses.length <= 0) {
-                pToAddresses = lMimeMessage.getRecipients(javax.mail.Message.RecipientType.TO);
+                pToAddresses = lMimeMessage.getRecipients(jakarta.mail.Message.RecipientType.TO);
             }
             if (pCcAddresses.length <= 0) {
-                pCcAddresses = lMimeMessage.getRecipients(javax.mail.Message.RecipientType.CC);
+                pCcAddresses = lMimeMessage.getRecipients(jakarta.mail.Message.RecipientType.CC);
             }
 
             if (pBccAddresses.length <= 0) {
-                pBccAddresses = lMimeMessage.getRecipients(javax.mail.Message.RecipientType.BCC);
+                pBccAddresses = lMimeMessage.getRecipients(jakarta.mail.Message.RecipientType.BCC);
             }
         }
         

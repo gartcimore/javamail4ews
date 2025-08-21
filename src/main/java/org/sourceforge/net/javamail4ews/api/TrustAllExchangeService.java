@@ -15,7 +15,7 @@ import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.mail.MessagingException;
+import jakarta.mail.MessagingException;
 import microsoft.exchange.webservices.data.EWSConstants;
 import microsoft.exchange.webservices.data.core.CookieProcessingTargetAuthenticationStrategy;
 import microsoft.exchange.webservices.data.core.EwsSSLProtocolSocketFactory;

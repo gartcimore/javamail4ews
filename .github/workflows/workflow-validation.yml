@@ -1,0 +1,229 @@
+---
+name: Workflow Validation
+
+on:
+  workflow_dispatch:
+    inputs:
+      test_type:
+        description: 'Type of validation test to run'
+        required: true
+        default: 'all'
+        type: choice
+        options:
+          - all
+          - matrix-builds
+          - artifact-generation
+          - deployment-test
+      java_versions:
+        description: 'Java versions to test (comma-separated)'
+        required: false
+        default: '21,22,23'
+        type: string
+
+env:
+  MAVEN_OPTS: >-
+    -Dhttp.keepAlive=false -Dmaven.wagon.http.pool=false
+    -Dmaven.wagon.http.retryHandler.class=standard
+    -Dmaven.wagon.http.retryHandler.count=3
+  MAVEN_SETTINGS: ${{ github.workspace }}/settings.xml
+
+jobs:
+  validation-setup:
+    name: Validation Setup
+    runs-on: ubuntu-latest
+    outputs:
+      java-versions: ${{ steps.setup.outputs.java-versions }}
+      test-matrix-builds: ${{ steps.setup.outputs.test-matrix-builds }}
+      test-artifact-generation: >-
+        ${{ steps.setup.outputs.test-artifact-generation }}
+      test-deployment: ${{ steps.setup.outputs.test-deployment }}
+
+    steps:
+      - name: Setup test configuration
+        id: setup
+        run: |
+          # Parse Java versions
+          JAVA_VERSIONS="${{ github.event.inputs.java_versions || '21,22,23' }}"
+          JAVA_ARRAY=$(echo $JAVA_VERSIONS | jq -R -s -c \
+            'split(",") | map(select(length > 0))')
+          echo "java-versions=$JAVA_ARRAY" >> $GITHUB_OUTPUT
+
+          # Determine which tests to run
+          TEST_TYPE="${{ github.event.inputs.test_type || 'all' }}"
+
+          if [[ "$TEST_TYPE" == "all" || "$TEST_TYPE" == "matrix-builds" ]]; then
+            echo "test-matrix-builds=true" >> $GITHUB_OUTPUT
+          else
+            echo "test-matrix-builds=false" >> $GITHUB_OUTPUT
+          fi
+
+          if [[ "$TEST_TYPE" == "all" || "$TEST_TYPE" == "artifact-generation" ]]; then
+            echo "test-artifact-generation=true" >> $GITHUB_OUTPUT
+          else
+            echo "test-artifact-generation=false" >> $GITHUB_OUTPUT
+          fi
+
+          if [[ "$TEST_TYPE" == "all" || "$TEST_TYPE" == "deployment-test" ]]; then
+            echo "test-deployment=true" >> $GITHUB_OUTPUT
+          else
+            echo "test-deployment=false" >> $GITHUB_OUTPUT
+          fi
+
+          echo "Configuration:"
+          echo "- Java versions: $JAVA_ARRAY"
+
+  matrix-build-validation:
+    name: Matrix Build Validation (Java ${{ matrix.java-version }})
+    runs-on: ubuntu-latest
+    needs: validation-setup
+    if: needs.validation-setup.outputs.test-matrix-builds == 'true'
+
+    strategy:
+      matrix:
+        java-version: ${{ fromJson(needs.validation-setup.outputs.java-versions) }}
+      fail-fast: false
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK ${{ matrix.java-version }}
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ matrix.java-version }}
+          distribution: 'temurin'
+
+      - name: Cache Maven dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2/repository
+          key: >-
+            validation-${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            validation-${{ runner.os }}-maven-
+
+      - name: Validate Maven project
+        run: |
+          echo "=== Validating project with Java ${{ matrix.java-version }} ==="
+          mvn validate -s settings.xml
+
+      - name: Compile project
+        run: |
+          echo "=== Compiling project with Java ${{ matrix.java-version }} ==="
+          mvn clean compile -s settings.xml
+
+      - name: Run unit tests
+        run: |
+          echo "=== Running unit tests with Java ${{ matrix.java-version }} ==="
+          mvn test -s settings.xml
+
+      - name: Upload validation results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: matrix-validation-java-${{ matrix.java-version }}
+          path: |
+            target/surefire-reports/
+            target/baseline-results/
+          retention-days: 7
+
+  artifact-generation-validation:
+    name: Artifact Generation Validation
+    runs-on: ubuntu-latest
+    needs: validation-setup
+    if: needs.validation-setup.outputs.test-artifact-generation == 'true'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+
+      - name: Cache Maven dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2/repository
+          key: >-
+            validation-${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            validation-${{ runner.os }}-maven-
+
+      - name: Build and package
+        run: |
+          echo "=== Building and packaging project ==="
+          mvn clean package -DskipTests -s settings.xml
+
+      - name: Validate main JAR artifact
+        run: |
+          echo "=== Validating main JAR artifact ==="
+
+          # Check if main JAR exists
+          if [ ! -f "target/javamail4ews.jar" ]; then
+            echo "ERROR: Main JAR file not found"
+            exit 1
+          fi
+
+          # Check JAR size (should be reasonable)
+          JAR_SIZE=$(stat -f%z target/javamail4ews.jar 2>/dev/null || \
+            stat -c%s target/javamail4ews.jar)
+          echo "Main JAR size: $JAR_SIZE bytes"
+
+          if [ $JAR_SIZE -lt 1000 ]; then
+            echo "ERROR: JAR file seems too small"
+            exit 1
+          fi
+
+          echo "SUCCESS: Main JAR validation passed"
+
+      - name: Upload artifact validation results
+        uses: actions/upload-artifact@v4
+        with:
+          name: artifact-validation-results
+          path: |
+            target/javamail4ews.jar
+            target/lib/
+          retention-days: 7
+
+  validation-summary:
+    name: Validation Summary
+    runs-on: ubuntu-latest
+    needs: [validation-setup, matrix-build-validation, artifact-generation-validation]
+    if: always()
+
+    steps:
+      - name: Generate validation report
+        run: |
+          echo "# GitHub Actions Workflow Validation Report" > validation-report.md
+          echo "" >> validation-report.md
+          echo "**Validation Date:** $(date)" >> validation-report.md
+          echo "**Test Type:** ${{ github.event.inputs.test_type || 'all' }}" \
+            >> validation-report.md
+          echo "" >> validation-report.md
+
+          echo "## Test Results" >> validation-report.md
+          echo "" >> validation-report.md
+
+          # Matrix build validation
+          if [ "${{ needs.validation-setup.outputs.test-matrix-builds }}" == "true" ]; then
+            if [ "${{ needs.matrix-build-validation.result }}" == "success" ]; then
+              echo "✅ **Matrix Build Validation:** PASSED" >> validation-report.md
+            else
+              echo "❌ **Matrix Build Validation:** FAILED" >> validation-report.md
+            fi
+          else
+            echo "⏭️ **Matrix Build Validation:** SKIPPED" >> validation-report.md
+          fi
+
+          echo "Validation report generated:"
+          cat validation-report.md
+
+      - name: Upload validation report
+        uses: actions/upload-artifact@v4
+        with:
+          name: validation-report
+          path: validation-report.md
+          retention-days: 30

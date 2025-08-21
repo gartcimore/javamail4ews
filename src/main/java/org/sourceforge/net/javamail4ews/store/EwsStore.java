@@ -23,13 +23,13 @@ import java.net.URL;
 import java.util.Optional;
 import java.util.regex.Pattern;
 
-import javax.mail.Folder;
-import javax.mail.MessagingException;
-import javax.mail.Session;
-import javax.mail.Store;
-import javax.mail.URLName;
+import jakarta.mail.Folder;
+import jakarta.mail.MessagingException;
+import jakarta.mail.Session;
+import jakarta.mail.Store;
+import jakarta.mail.URLName;
 
-import org.apache.commons.configuration.Configuration;
+import org.apache.commons.configuration2.Configuration;
 import org.sourceforge.net.javamail4ews.util.Util;
 
 import microsoft.exchange.webservices.data.core.ExchangeService;

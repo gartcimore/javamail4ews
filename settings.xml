@@ -4,6 +4,7 @@
 
     <activeProfiles>
         <activeProfile>github</activeProfile>
+        <activeProfile>ci-optimizations</activeProfile>
     </activeProfiles>
 
     <profiles>
@@ -22,17 +23,44 @@
                 </repository>
                 <repository>
                     <id>github</id>
-                    <name>GitHub OWNER Apache Maven Packages</name>
-                    <url>https://maven.pkg.github.com/OWNER</url>
+                    <name>GitHub gartcimore Apache Maven Packages</name>
+                    <url>https://maven.pkg.github.com/gartcimore/javamail4ews</url>
+                    <releases>
+                        <enabled>true</enabled>
+                    </releases>
+                    <snapshots>
+                        <enabled>true</enabled>
+                    </snapshots>
                 </repository>
             </repositories>
+        </profile>
+        
+        <!-- CI/CD optimizations profile -->
+        <profile>
+            <id>ci-optimizations</id>
+            <properties>
+                <!-- Optimize Maven execution for CI environment -->
+                <maven.wagon.http.retryHandler.count>3</maven.wagon.http.retryHandler.count>
+                <maven.wagon.http.retryHandler.class>standard</maven.wagon.http.retryHandler.class>
+                <maven.wagon.http.pool>false</maven.wagon.http.pool>
+                <http.keepAlive>false</http.keepAlive>
+                
+                <!-- Reduce verbosity in CI logs -->
+                <maven.test.redirectTestOutputToFile>true</maven.test.redirectTestOutputToFile>
+                <maven.compiler.showWarnings>false</maven.compiler.showWarnings>
+                <maven.compiler.showDeprecation>false</maven.compiler.showDeprecation>
+                
+                <!-- Optimize dependency resolution -->
+                <maven.artifact.threads>4</maven.artifact.threads>
+            </properties>
         </profile>
     </profiles>
 
     <servers>
         <server>
             <id>github</id>
-            <username>${env.GITHUB_USERNAME}</username>
+            <!-- Use GITHUB_ACTOR (automatically provided) or fallback to GITHUB_USERNAME -->
+            <username>${env.GITHUB_ACTOR}</username>
             <password>${env.GITHUB_TOKEN}</password>
         </server>
     </servers>
