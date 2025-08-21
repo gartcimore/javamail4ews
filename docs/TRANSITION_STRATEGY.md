@@ -15,7 +15,7 @@ This document outlines the safe transition strategy from Travis CI to GitHub Act
 
 ### Java Version Upgrade
 - **Travis CI**: OpenJDK 9
-- **GitHub Actions**: Java 17 and 21 (matrix build)
+- **GitHub Actions**: Java 21, 22, and 23 (matrix build)
 - **Rationale**: Modernizing to supported Java versions
 
 ### Build Process Improvements
@@ -40,7 +40,7 @@ When both Travis CI and GitHub Actions run on the same commit:
 
 These differences are expected and acceptable:
 
-- **Java Version**: Travis uses Java 9, GitHub Actions uses Java 17/21
+- **Java Version**: Travis uses Java 9, GitHub Actions uses Java 21/22/23
 - **Build Environment**: Different OS versions and tooling
 - **Artifact Names**: GitHub Actions may have enhanced naming
 - **Additional Jobs**: GitHub Actions includes security scanning and performance tests

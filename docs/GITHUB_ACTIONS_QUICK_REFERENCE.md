@@ -60,8 +60,9 @@ gh run view <run-id>
 ## Java Version Matrix
 
 Current matrix tests against:
-- Java 17 (LTS)
 - Java 21 (LTS)
+- Java 22
+- Java 23
 
 To add Java version, edit `.github/workflows/ci.yml`:
 ```yaml

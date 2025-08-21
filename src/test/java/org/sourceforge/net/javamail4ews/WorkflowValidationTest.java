@@ -196,7 +196,7 @@ public class WorkflowValidationTest {
         String majorVersion = javaVersion.split("\\.")[0];
         
         int javaMajor = Integer.parseInt(majorVersion);
-        assertTrue(javaMajor >= 17, "Tests should run on Java 17 or higher, current: " + javaVersion);
+        assertTrue(javaMajor >= 21, "Tests should run on Java 21 or higher, current: " + javaVersion);
         
         // Check if we can load main classes (basic smoke test)
         try {

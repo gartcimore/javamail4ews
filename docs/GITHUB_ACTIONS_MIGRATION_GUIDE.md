@@ -21,7 +21,7 @@ This guide documents the migration from Travis CI to GitHub Actions for the Java
 
 ### Java Version Updates
 - **Travis CI**: OpenJDK 9
-- **GitHub Actions**: Java 17, 21 (matrix strategy)
+- **GitHub Actions**: Java 21, 22, 23 (matrix strategy)
 - **Impact**: Modern Java support, better compatibility testing
 
 ## Key Differences: Travis CI vs GitHub Actions
@@ -308,8 +308,8 @@ Cache not found for input keys: linux-m2-abc123...
 
 **Issue**: Matrix builds failing inconsistently
 ```
-Java 17: ✅ Success
-Java 21: ❌ Failure
+Java 21: ✅ Success
+Java 22: ❌ Failure
 ```
 
 **Debugging**:

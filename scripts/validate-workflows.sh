@@ -127,10 +127,10 @@ validate_maven_config() {
     
     # Check Java version compatibility
     local java_version=$(java -version 2>&1 | head -n 1 | cut -d'"' -f2 | cut -d'.' -f1)
-    if [ "$java_version" -ge 17 ]; then
+    if [ "$java_version" -ge 21 ]; then
         print_success "Java version $java_version is compatible"
     else
-        print_warning "Java version $java_version may not be compatible (requires 17+)"
+        print_warning "Java version $java_version may not be compatible (requires 21+)"
     fi
 }
 
@@ -236,7 +236,7 @@ validate_workflow_config() {
         fi
         
         # Check for Java versions
-        if grep -q "java-version.*17" ".github/workflows/ci.yml" && grep -q "java-version.*21" ".github/workflows/ci.yml"; then
+        if grep -q "java-version.*21" ".github/workflows/ci.yml" && grep -q "java-version.*22" ".github/workflows/ci.yml"; then
             print_success "CI workflow tests multiple Java versions"
         else
             print_warning "CI workflow may not test multiple Java versions"

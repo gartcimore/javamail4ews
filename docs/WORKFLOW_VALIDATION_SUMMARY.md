@@ -25,7 +25,7 @@ validate → [test, baseline-tests, performance-tests, security-scan] → build
 #### Job Details
 
 1. **validate**: Project validation and dependency analysis
-2. **test**: Unit tests across Java 17 and 21 (matrix strategy)
+2. **test**: Unit tests across Java 21, 22, and 23 (matrix strategy)
 3. **baseline-tests**: Core functionality tests across Java versions
 4. **performance-tests**: Performance benchmarking (Java 21 only)
 5. **security-scan**: OWASP dependency vulnerability scanning
@@ -51,8 +51,9 @@ release-build → deploy-github → create-release
 
 **Status**: ✅ **PASSED**
 
-- **Java 17**: All tests pass, artifacts generated successfully
 - **Java 21**: All tests pass, artifacts generated successfully
+- **Java 22**: All tests pass, artifacts generated successfully
+- **Java 23**: All tests pass, artifacts generated successfully
 - **Build Time**: ~5-8 minutes (improved from Travis CI's ~10-12 minutes)
 - **Cache Hit Rate**: >90% on subsequent builds
 
@@ -142,7 +143,7 @@ release-build → deploy-github → create-release
 
 ### Technical Improvements
 
-1. **Modern Java Support**: Testing against Java 17 and 21
+1. **Modern Java Support**: Testing against Java 21, 22, and 23
 2. **Advanced Caching**: Multi-layer dependency and build caching
 3. **Matrix Testing**: Parallel testing across multiple Java versions
 4. **Comprehensive Reporting**: Detailed test and security reports
