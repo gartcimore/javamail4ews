@@ -50,8 +50,8 @@ public class WorkflowValidationTest {
         assertTrue(content.contains("java-version:"), "CI workflow should test multiple Java versions");
         
         // Check for required Java versions
-        assertTrue(content.contains("17") && content.contains("21"), 
-                  "CI workflow should test Java 17 and 21");
+        assertTrue(content.contains("21") && content.contains("22") && content.contains("23"), 
+                  "CI workflow should test Java 21, 22, and 23");
         
         // Check for required jobs
         assertTrue(content.contains("validate:"), "CI workflow should have validate job");

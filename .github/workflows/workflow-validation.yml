@@ -17,7 +17,7 @@ on:
       java_versions:
         description: 'Java versions to test (comma-separated)'
         required: false
-        default: '17,21'
+        default: '21,22,23'
         type: string
 
 env:
@@ -43,7 +43,7 @@ jobs:
         id: setup
         run: |
           # Parse Java versions
-          JAVA_VERSIONS="${{ github.event.inputs.java_versions || '17,21' }}"
+          JAVA_VERSIONS="${{ github.event.inputs.java_versions || '21,22,23' }}"
           JAVA_ARRAY=$(echo $JAVA_VERSIONS | jq -R -s -c \
             'split(",") | map(select(length > 0))')
           echo "java-versions=$JAVA_ARRAY" >> $GITHUB_OUTPUT

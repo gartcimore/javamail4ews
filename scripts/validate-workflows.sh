@@ -296,7 +296,7 @@ generate_report() {
 
 ## Recommendations
 
-1. **Matrix Testing**: Ensure workflows test against Java 17 and 21
+1. **Matrix Testing**: Ensure workflows test against Java 21, 22, and 23
 2. **Artifact Validation**: Verify all required artifacts are generated
 3. **Deployment Testing**: Test deployment process with a test tag
 4. **Documentation**: Update project documentation with new CI/CD setup
