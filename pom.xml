@@ -37,7 +37,7 @@
         <version.jakarta.mail>2.0.1</version.jakarta.mail>
         <version.jakarta.mail.api>2.1.1</version.jakarta.mail.api>
         <version.jakarta.activation>2.1.1</version.jakarta.activation>
-        <version.httpcomponents.client>4.4.1</version.httpcomponents.client>
+        <version.httpcomponents.client>4.5.13</version.httpcomponents.client>
         <version.httpcomponents.core>4.4.1</version.httpcomponents.core>
         <version.findbugs.annotations>2.0.3</version.findbugs.annotations>
         <version.maven.site.plugin>4.0.0-M13</version.maven.site.plugin>
