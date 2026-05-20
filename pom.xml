@@ -31,7 +31,7 @@
         <maven.surefire.plugin.version>3.0.0-M9</maven.surefire.plugin.version>
         <build.helper.maven.plugin.version>1.12</build.helper.maven.plugin.version>
 
-        <version.commons.configuration>2.10.1</version.commons.configuration>
+        <version.commons.configuration>2.15.0</version.commons.configuration>
 
         <version.microsoft.ewsjava.api>2.0</version.microsoft.ewsjava.api>
         <version.jakarta.mail>2.0.1</version.jakarta.mail>
