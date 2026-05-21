@@ -37,8 +37,8 @@
         <version.jakarta.mail>2.0.1</version.jakarta.mail>
         <version.jakarta.mail.api>2.1.1</version.jakarta.mail.api>
         <version.jakarta.activation>2.1.1</version.jakarta.activation>
-        <version.httpcomponents.client>4.4.1</version.httpcomponents.client>
-        <version.httpcomponents.core>4.4.1</version.httpcomponents.core>
+        <version.httpcomponents.client>4.5.14</version.httpcomponents.client>
+        <version.httpcomponents.core>4.4.16</version.httpcomponents.core>
         <version.findbugs.annotations>2.0.3</version.findbugs.annotations>
         <version.maven.site.plugin>4.0.0-M13</version.maven.site.plugin>
         <version.maven.jar.plugin>3.3.0</version.maven.jar.plugin>
@@ -76,7 +76,13 @@
         <dependency>
             <groupId>commons-beanutils</groupId>
             <artifactId>commons-beanutils</artifactId>
-            <version>1.9.4</version>
+            <version>1.11.0</version>
+        </dependency>
+        <!-- commons-io required by commons-configuration2 -->
+        <dependency>
+            <groupId>commons-io</groupId>
+            <artifactId>commons-io</artifactId>
+            <version>2.19.0</version>
         </dependency>
         
         <!-- Note: commons-codec and slf4j-api removed as unused dependencies -->
